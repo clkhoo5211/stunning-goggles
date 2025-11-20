@@ -32,9 +32,13 @@ const queryClient = new QueryClient({
   },
 });
 
+// Get base path from Vite (automatically set from vite.config.ts)
+// This will be '/stunning-goggles/' in production, '/' in development
+const basename = import.meta.env.BASE_URL;
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
           <App />
