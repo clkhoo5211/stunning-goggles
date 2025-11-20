@@ -15,6 +15,15 @@ const CUSTOM_MESSAGES: Record<string, string> = {
   SwapExecutionDisabled: 'Liquidity swaps are disabled by governance.',
   InvalidSwapIndex: 'Invalid swap reference.',
   SwapAlreadyFulfilled: 'This swap request was already fulfilled.',
+  // Common RPC errors
+  'insufficient funds': 'Insufficient funds for transaction',
+  'user rejected': 'Transaction rejected by user',
+  'nonce too low': 'Transaction nonce too low',
+  'replacement transaction underpriced': 'Replacement transaction underpriced',
+  'already known': 'Transaction already known',
+  'execution reverted': 'Transaction execution reverted',
+  'gas required exceeds allowance': 'Gas required exceeds allowance',
+  'insufficient gas': 'Insufficient gas',
   // Governance errors
   GovernorUnexpectedProposalState: 'Proposal is not in the correct state for this action.',
   GovernorOnlyExecutor: 'Only the executor can perform this action.',
@@ -25,7 +34,6 @@ const CUSTOM_MESSAGES: Record<string, string> = {
   GovernorAlreadyCastVote: 'You have already voted on this proposal.',
   GovernorInsufficientVotingPower: 'You do not have enough voting power to vote on this proposal.',
   GovernorUnableToCancel: 'This proposal cannot be cancelled. Only Pending or Active proposals can be cancelled. Queued proposals cannot be cancelled.',
-  GovernorUnexpectedProposalState: 'Proposal is not in the correct state for this action.',
 };
 
 const extractHexData = (error: unknown): (`0x${string}`)[] => {
@@ -63,7 +71,7 @@ const decodeCustomError = (error: unknown): string | null => {
     } catch {
       // Ignore decode failures and continue trying other candidates
     }
-    
+
     // Try governance ABI
     try {
       const decoded = decodeErrorResult({

@@ -18,7 +18,6 @@ import {
   CheckCircle2,
   Loader2,
   Plus,
-  FileText,
   History,
   Zap
 } from 'lucide-react';
@@ -32,14 +31,8 @@ const Governance = () => {
   const [proposalFilter, setProposalFilter] = useState<ProposalFilterType>('active');
   const [isCreateProposalOpen, setIsCreateProposalOpen] = useState(false);
   const governance = useGovernanceContract();
-  const { data: blockNumber } = useBlockNumber({ watch: true });
+  useBlockNumber({ watch: true }); // Keep watching for updates
   const { proposals, isLoading: isLoadingProposals } = useProposals();
-
-  const formatDays = (seconds?: number) => {
-    if (!seconds) return 'N/A';
-    const days = seconds / (24 * 60 * 60);
-    return days.toFixed(1);
-  };
 
   const formatBlocks = (blocks?: number) => {
     if (!blocks) return 'N/A';
@@ -379,7 +372,7 @@ const Governance = () => {
                   <ol className="text-xs text-slate-400 space-y-1 list-decimal list-inside">
                     <li>Proposal created → <span className="text-slate-300">Pending</span></li>
                     <li>Voting delay passes → <span className="text-slate-300">Active</span> (voting starts)</li>
-                    <li>Voting period ({governance.votingPeriodDays ? `${governance.votingPeriodDays.toFixed(1)} days` : '7 days'}) → <span className="text-slate-300">people vote</span></li>
+                    <li>Voting period (7 days) → <span className="text-slate-300">people vote</span></li>
                     <li>Voting period ends → <span className="text-slate-300">Succeeded</span> (if FOR &gt; AGAINST)</li>
                     <li>Proposal queued → <span className="text-slate-300">Queued</span> (timelock delay starts)</li>
                     <li>Timelock delay ({governance.minDelayDays ? `${governance.minDelayDays.toFixed(1)} days` : '2 days'}) passes → <span className="text-slate-300">can be executed</span></li>
