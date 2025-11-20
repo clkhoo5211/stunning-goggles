@@ -46,10 +46,10 @@ const Governance = () => {
     // Assuming ~12 seconds per block (Ethereum mainnet)
     const days = (blocks * 12) / (24 * 60 * 60);
     if (days >= 1) {
-      return `${days.toFixed(1)} days(${blocks.toLocaleString()} blocks)`;
+      return `${days.toFixed(1)} days (${blocks.toLocaleString()} blocks)`;
     }
     const hours = (blocks * 12) / 3600;
-    return `${hours.toFixed(1)} hours(${blocks.toLocaleString()} blocks)`;
+    return `${hours.toFixed(1)} hours (${blocks.toLocaleString()} blocks)`;
   };
 
   if (!isConnected) {
@@ -109,8 +109,8 @@ const Governance = () => {
           <button
             onClick={() => setActiveTab('governance')}
             className={`flex - 1 flex items - center justify - center gap - 2 px - 4 py - 3 rounded - lg font - semibold transition - all ${activeTab === 'governance'
-                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800'
               } `}
           >
             <Vote className="w-5 h-5" />
@@ -119,8 +119,8 @@ const Governance = () => {
           <button
             onClick={() => setActiveTab('timelock')}
             className={`flex - 1 flex items - center justify - center gap - 2 px - 4 py - 3 rounded - lg font - semibold transition - all ${activeTab === 'timelock'
-                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800'
               } `}
           >
             <Clock className="w-5 h-5" />
@@ -157,8 +157,8 @@ const Governance = () => {
               <button
                 onClick={() => setProposalFilter('active')}
                 className={`flex - 1 flex items - center justify - center gap - 2 px - 4 py - 2 rounded - lg font - semibold transition - all ${proposalFilter === 'active'
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
                   } `}
               >
                 <Zap className="w-4 h-4" />
@@ -167,8 +167,8 @@ const Governance = () => {
               <button
                 onClick={() => setProposalFilter('history')}
                 className={`flex - 1 flex items - center justify - center gap - 2 px - 4 py - 2 rounded - lg font - semibold transition - all ${proposalFilter === 'history'
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
                   } `}
               >
                 <History className="w-4 h-4" />
