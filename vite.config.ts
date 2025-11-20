@@ -17,6 +17,7 @@ export default defineConfig(({ mode }) => {
         return html
           .replace(/href="\/manifest\.json"/g, `href="${base}manifest.webmanifest"`)
           .replace(/href="\/(assets\/[^"]+)"/g, (match, path) => `href="${base}${path}"`)
+          .replace(/src="\/(assets\/[^"]+)"/g, (match, path) => `src="${base}${path}"`)
           .replace(/href="\/(apple-touch-icon\.png)"/g, (match, path) => `href="${base}${path}"`);
       },
     };
@@ -32,7 +33,7 @@ export default defineConfig(({ mode }) => {
       // PWA Plugin (Progressive Web App)
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'assets/logo.svg'],
 
         manifest: {
           name: 'LuckChain - Provably Fair Blockchain Gaming',
@@ -46,6 +47,12 @@ export default defineConfig(({ mode }) => {
           orientation: 'portrait',
 
           icons: [
+            {
+              src: `${base}assets/logo.svg`,
+              sizes: 'any',
+              type: 'image/svg+xml',
+              purpose: 'any maskable'
+            },
             {
               src: `${base}pwa-192x192.png`,
               sizes: '192x192',
