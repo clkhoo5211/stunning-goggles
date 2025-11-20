@@ -2,7 +2,7 @@ import { useReadContract, useBlockNumber } from 'wagmi';
 import { luckGovernorAbi } from '@lib/contracts/abi/luckGovernor';
 import addresses from '@lib/contracts/addresses.json';
 import { ProposalCard } from './ProposalCard';
-import { FileText, Loader2, Clock, Hourglass, CheckCircle, ChevronDown } from 'lucide-react';
+import { Loader2, Hourglass, CheckCircle, ChevronDown } from 'lucide-react';
 import { ProposalInfo } from '@hooks/useProposals';
 import { useGovernanceContract } from '@hooks/useGovernanceContract';
 import { useState, useEffect, useMemo } from 'react';

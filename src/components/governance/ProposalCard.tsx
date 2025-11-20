@@ -39,17 +39,6 @@ const stateLabels: Record<ProposalState, string> = {
   [ProposalState.Executed]: 'Executed',
 };
 
-const stateColors: Record<ProposalState, string> = {
-  [ProposalState.Pending]: 'text-slate-400',
-  [ProposalState.Active]: 'text-blue-400',
-  [ProposalState.Canceled]: 'text-red-400',
-  [ProposalState.Defeated]: 'text-red-400',
-  [ProposalState.Succeeded]: 'text-green-400',
-  [ProposalState.Queued]: 'text-yellow-400',
-  [ProposalState.Expired]: 'text-slate-500',
-  [ProposalState.Executed]: 'text-green-500',
-};
-
 export function ProposalCard({ proposalId, description, onVote, onQueue, onExecute, onCancel }: ProposalCardProps) {
   const { address } = useAccount();
   const { data: blockNumber } = useBlockNumber({ watch: true });

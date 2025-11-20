@@ -15,11 +15,8 @@ import {
   Settings,
   TrendingUp,
   AlertCircle,
-  CheckCircle2,
   Loader2,
-  Plus,
-  History,
-  Zap
+  Plus
 } from 'lucide-react';
 
 type TabType = 'governance' | 'timelock';
@@ -378,7 +375,7 @@ const Governance = () => {
                     { label: 'Succeeded', color: 'bg-green-500' },
                     { label: 'Queued', color: 'bg-yellow-500' },
                     { label: 'Executed', color: 'bg-purple-500' },
-                  ].map((step, i) => (
+                  ].map((step) => (
                     <div key={step.label} className="flex flex-col items-center gap-2 bg-slate-900 px-2">
                       <div className={`w-3 h-3 rounded-full ${step.color} ring-4 ring-slate-900`} />
                       <span className="text-[10px] text-slate-400 font-medium uppercase">{step.label}</span>
