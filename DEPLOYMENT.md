@@ -56,7 +56,19 @@ git push -u origin main
    - Source: **GitHub Actions**
 4. Save the settings
 
-### 5. Configure Base Path (if needed)
+### 5. Configure Password Secret
+
+The application uses password protection. Set your password as a GitHub Secret:
+
+1. Go to **Settings** → **Secrets and variables** → **Actions**
+2. Click **New repository secret**
+3. Name: `VITE_APP_PASSWORD`
+4. Value: Your desired password (e.g., `your_secure_password_123`)
+5. Click **Add secret**
+
+**Note**: If you don't set this secret, the app will use the default password `654789` (not recommended for production).
+
+### 6. Configure Base Path (if needed)
 
 If deploying to `username.github.io/repo-name`:
 
