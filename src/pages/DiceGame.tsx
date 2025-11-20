@@ -68,7 +68,7 @@ const DiceGame: React.FC = () => {
   const [decisionDeadline, setDecisionDeadline] = useState<number | null>(null);
   const [userOverrideDirection, setUserOverrideDirection] = useState(false);
   const [pendingExpiredLocally, setPendingExpiredLocally] = useState(false);
-  const [resolvingPending, setResolvingPending] = useState(false);
+  const [resolvingPending] = useState(false);
   const [animationKey, setAnimationKey] = useState(0);
   const pendingSnapshotRef = useRef<{ gameId: number | null; deadline: number | null } | null>(null);
 

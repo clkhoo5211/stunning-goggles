@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
+```
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useAccount, useReadContract, useBlockNumber } from 'wagmi';
+import { useAccount, useBlockNumber } from 'wagmi';
 import { useGovernanceContract } from '@hooks/useGovernanceContract';
 import { useProposals } from '@hooks/useProposals';
 import { AnimatedNumber } from '@components/ui/animated-number';
-import { ProposalCard } from '@components/governance/ProposalCard';
 import { CreateProposalModal } from '@components/governance/CreateProposalModal';
-import { ProposalsList } from '@components/governance/ProposalsList';
 import { TimelockOperations } from '@components/governance/TimelockOperations';
+import { ProposalsList } from '@components/governance/ProposalsList';
 import { luckGovernorAbi } from '@lib/contracts/abi/luckGovernor';
 import addresses from '@lib/contracts/addresses.json';
 import { 
@@ -49,10 +49,10 @@ const Governance = () => {
     // Assuming ~12 seconds per block (Ethereum mainnet)
     const days = (blocks * 12) / (24 * 60 * 60);
     if (days >= 1) {
-      return `${days.toFixed(1)} days (${blocks.toLocaleString()} blocks)`;
+      return `${ days.toFixed(1) } days(${ blocks.toLocaleString() } blocks)`;
     }
     const hours = (blocks * 12) / 3600;
-    return `${hours.toFixed(1)} hours (${blocks.toLocaleString()} blocks)`;
+    return `${ hours.toFixed(1) } hours(${ blocks.toLocaleString() } blocks)`;
   };
 
   if (!isConnected) {
@@ -111,22 +111,22 @@ const Governance = () => {
         <div className="flex gap-2">
           <button
             onClick={() => setActiveTab('governance')}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all ${
-              activeTab === 'governance'
-                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
+            className={`flex - 1 flex items - center justify - center gap - 2 px - 4 py - 3 rounded - lg font - semibold transition - all ${
+  activeTab === 'governance'
+    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
+    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+} `}
           >
             <Vote className="w-5 h-5" />
             Governance
           </button>
           <button
             onClick={() => setActiveTab('timelock')}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all ${
-              activeTab === 'timelock'
-                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
+            className={`flex - 1 flex items - center justify - center gap - 2 px - 4 py - 3 rounded - lg font - semibold transition - all ${
+  activeTab === 'timelock'
+    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
+    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+} `}
           >
             <Clock className="w-5 h-5" />
             Timelock
@@ -161,22 +161,22 @@ const Governance = () => {
             <div className="flex gap-2">
               <button
                 onClick={() => setProposalFilter('active')}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
-                  proposalFilter === 'active'
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                }`}
+                className={`flex - 1 flex items - center justify - center gap - 2 px - 4 py - 2 rounded - lg font - semibold transition - all ${
+  proposalFilter === 'active'
+    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
+    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+} `}
               >
                 <Zap className="w-4 h-4" />
                 Active
               </button>
               <button
                 onClick={() => setProposalFilter('history')}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
-                  proposalFilter === 'history'
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                }`}
+                className={`flex - 1 flex items - center justify - center gap - 2 px - 4 py - 2 rounded - lg font - semibold transition - all ${
+  proposalFilter === 'history'
+    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
+    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+} `}
               >
                 <History className="w-4 h-4" />
                 History
@@ -285,7 +285,7 @@ const Governance = () => {
                   <p className="text-sm text-slate-400 mb-1">Quorum</p>
                   <p className="text-lg font-semibold">
                     {governance.quorumPercentage !== undefined
-                      ? `${governance.quorumPercentage.toFixed(2)}%`
+                      ? `${ governance.quorumPercentage.toFixed(2) }% `
                       : 'N/A'}
                   </p>
                   {governance.currentQuorum && (
@@ -368,7 +368,7 @@ const Governance = () => {
                 <p className="text-sm text-slate-400 mb-1">Minimum Delay</p>
                 <p className="text-2xl font-bold">
                   {governance.minDelayDays !== undefined
-                    ? `${governance.minDelayDays.toFixed(1)} days`
+                    ? `${ governance.minDelayDays.toFixed(1) } days`
                     : 'N/A'}
                 </p>
                 {governance.minDelay && (
@@ -386,10 +386,10 @@ const Governance = () => {
                   <ol className="text-xs text-slate-400 space-y-1 list-decimal list-inside">
                     <li>Proposal created → <span className="text-slate-300">Pending</span></li>
                     <li>Voting delay passes → <span className="text-slate-300">Active</span> (voting starts)</li>
-                    <li>Voting period ({governance.votingPeriodDays ? `${governance.votingPeriodDays.toFixed(1)} days` : '7 days'}) → <span className="text-slate-300">people vote</span></li>
+                    <li>Voting period ({governance.votingPeriodDays ? `${ governance.votingPeriodDays.toFixed(1) } days` : '7 days'}) → <span className="text-slate-300">people vote</span></li>
                     <li>Voting period ends → <span className="text-slate-300">Succeeded</span> (if FOR &gt; AGAINST)</li>
                     <li>Proposal queued → <span className="text-slate-300">Queued</span> (timelock delay starts)</li>
-                    <li>Timelock delay ({governance.minDelayDays ? `${governance.minDelayDays.toFixed(1)} days` : '2 days'}) passes → <span className="text-slate-300">can be executed</span></li>
+                    <li>Timelock delay ({governance.minDelayDays ? `${ governance.minDelayDays.toFixed(1) } days` : '2 days'}) passes → <span className="text-slate-300">can be executed</span></li>
                     <li>Proposal executed → <span className="text-slate-300">Executed</span></li>
                   </ol>
                   <p className="text-xs text-slate-500 mt-2">
