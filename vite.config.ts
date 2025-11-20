@@ -3,126 +3,129 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
 
-export default defineConfig({
-  // Set base to '/' for custom domain or '/repo-name/' for GitHub Pages
-  // For GitHub Pages at https://clkhoo5211.github.io/stunning-goggles/
-  base: '/stunning-goggles/',
+export default defineConfig(({ mode }) => {
+  // Use '/stunning-goggles/' for production (GitHub Pages), '/' for development
+  const base = mode === 'production' ? '/stunning-goggles/' : '/';
 
-  plugins: [
-    react(),
+  return {
+    base,
 
-    // PWA Plugin (Progressive Web App)
-    VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+    plugins: [
+      react(),
 
-      manifest: {
-        name: 'LuckChain - Provably Fair Blockchain Gaming',
-        short_name: 'LuckChain',
-        description: 'Multi-game blockchain gaming platform with provably fair dice game',
-        theme_color: '#0ea5e9',
-        background_color: '#0f172a',
-        display: 'standalone',
-        scope: '/stunning-goggles/',
-        start_url: '/stunning-goggles/',
-        orientation: 'portrait',
+      // PWA Plugin (Progressive Web App)
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
 
-        icons: [
-          {
-            src: '/pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any maskable'
-          },
-          {
-            src: '/pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable'
-          }
-        ],
+        manifest: {
+          name: 'LuckChain - Provably Fair Blockchain Gaming',
+          short_name: 'LuckChain',
+          description: 'Multi-game blockchain gaming platform with provably fair dice game',
+          theme_color: '#0ea5e9',
+          background_color: '#0f172a',
+          display: 'standalone',
+          scope: base,
+          start_url: base,
+          orientation: 'portrait',
 
-        categories: ['games', 'entertainment', 'finance'],
-      },
-
-      workbox: {
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
+          icons: [
+            {
+              src: '/pwa-192x192.png',
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'any maskable'
+            },
+            {
+              src: '/pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any maskable'
             }
-          },
-          {
-            urlPattern: /^https:\/\/.*\.(?:png|jpg|jpeg|svg|gif)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'image-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 30
+          ],
+
+          categories: ['games', 'entertainment', 'finance'],
+        },
+
+        workbox: {
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'google-fonts-cache',
+                expiration: {
+                  maxEntries: 10,
+                  maxAgeSeconds: 60 * 60 * 24 * 365
+                },
+                cacheableResponse: {
+                  statuses: [0, 200]
+                }
               }
+            },
+            {
+              urlPattern: /^https:\/\/.*\.(?:png|jpg|jpeg|svg|gif)$/,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'image-cache',
+                expiration: {
+                  maxEntries: 50,
+                  maxAgeSeconds: 60 * 60 * 24 * 30
+                }
+              }
+            },
+            {
+              // Don't cache blockchain RPC calls
+              urlPattern: /^https:\/\/.*\.rpc\..*/,
+              handler: 'NetworkOnly'
             }
-          },
-          {
-            // Don't cache blockchain RPC calls
-            urlPattern: /^https:\/\/.*\.rpc\..*/,
-            handler: 'NetworkOnly'
-          }
-        ],
-        skipWaiting: true,
-        clientsClaim: true,
+          ],
+          skipWaiting: true,
+          clientsClaim: true,
+        },
+
+        devOptions: {
+          enabled: true,
+          type: 'module',
+        }
+      })
+    ],
+
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+        '@components': path.resolve(__dirname, './src/components'),
+        '@hooks': path.resolve(__dirname, './src/hooks'),
+        '@lib': path.resolve(__dirname, './src/lib'),
+        '@pages': path.resolve(__dirname, './src/pages'),
+        '@styles': path.resolve(__dirname, './src/styles'),
+        '@types': path.resolve(__dirname, './src/types'),
+        '@utils': path.resolve(__dirname, './src/utils'),
       },
-
-      devOptions: {
-        enabled: true,
-        type: 'module',
-      }
-    })
-  ],
-
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@components': path.resolve(__dirname, './src/components'),
-      '@hooks': path.resolve(__dirname, './src/hooks'),
-      '@lib': path.resolve(__dirname, './src/lib'),
-      '@pages': path.resolve(__dirname, './src/pages'),
-      '@styles': path.resolve(__dirname, './src/styles'),
-      '@types': path.resolve(__dirname, './src/types'),
-      '@utils': path.resolve(__dirname, './src/utils'),
     },
-  },
 
-  server: {
-    port: 3000,
-    open: true,
-  },
+    server: {
+      port: 3000,
+      open: true,
+    },
 
-  build: {
-    outDir: 'dist',
-    sourcemap: true,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          wagmi: ['wagmi', 'viem'],
-          reown: ['@reown/appkit', '@reown/appkit-adapter-wagmi'],
+    build: {
+      outDir: 'dist',
+      sourcemap: true,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ['react', 'react-dom', 'react-router-dom'],
+            wagmi: ['wagmi', 'viem'],
+            reown: ['@reown/appkit', '@reown/appkit-adapter-wagmi'],
+          },
         },
       },
     },
-  },
 
-  optimizeDeps: {
-    include: ['react', 'react-dom', 'wagmi', 'viem'],
-  },
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'wagmi', 'viem'],
+    },
+  };
 });
 
