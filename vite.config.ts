@@ -2,16 +2,32 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
+import type { Plugin } from 'vite';
 
 export default defineConfig(({ mode }) => {
   // Use '/stunning-goggles/' for production (GitHub Pages), '/' for development
   const base = mode === 'production' ? '/stunning-goggles/' : '/';
+
+  // Plugin to inject base path into index.html
+  const injectBasePath = (): Plugin => {
+    return {
+      name: 'inject-base-path',
+      transformIndexHtml(html) {
+        // Replace absolute paths with base-prefixed paths
+        return html
+          .replace(/href="\/manifest\.json"/g, `href="${base}manifest.webmanifest"`)
+          .replace(/href="\/(assets\/[^"]+)"/g, (match, path) => `href="${base}${path}"`)
+          .replace(/href="\/(apple-touch-icon\.png)"/g, (match, path) => `href="${base}${path}"`);
+      },
+    };
+  };
 
   return {
     base,
 
     plugins: [
       react(),
+      injectBasePath(),
 
       // PWA Plugin (Progressive Web App)
       VitePWA({
@@ -31,13 +47,13 @@ export default defineConfig(({ mode }) => {
 
           icons: [
             {
-              src: '/pwa-192x192.png',
+              src: `${base}pwa-192x192.png`,
               sizes: '192x192',
               type: 'image/png',
               purpose: 'any maskable'
             },
             {
-              src: '/pwa-512x512.png',
+              src: `${base}pwa-512x512.png`,
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any maskable'
