@@ -1,28 +1,32 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+// Get base path from Vite (automatically set from vite.config.ts)
+// This will be '/stunning-goggles/' in production, '/' in development
+const BASE_PATH = import.meta.env.BASE_URL;
+
 type SoundType = 'roll' | 'win' | 'jackpot' | 'ambiance' | 'click' | 'loss' | 'swipe' | 'claim' | 'continue' | 'deposit' | 'withdraw' | 'buy_session' | 'click_cw' | 'click_ccw';
 
 const SOUND_PATHS: Record<SoundType, string> = {
-  roll: '/sounds/roll.wav',
-  win: '/sounds/win.wav',
-  jackpot: '/sounds/jackpot.wav',
-  ambiance: '/sounds/bgm1.mp3', // Initial track
-  click: '/sounds/click.wav',
-  loss: '/sounds/loss.wav',
-  swipe: '/sounds/swipe.wav',
-  claim: '/sounds/claim.wav',
-  continue: '/sounds/continue.wav',
-  deposit: '/sounds/deposit.wav',
-  withdraw: '/sounds/withdraw.wav',
-  buy_session: '/sounds/buy_session.wav',
-  click_cw: '/sounds/click_cw.wav',
-  click_ccw: '/sounds/click_ccw.wav',
+  roll: `${BASE_PATH}sounds/roll.wav`,
+  win: `${BASE_PATH}sounds/win.wav`,
+  jackpot: `${BASE_PATH}sounds/jackpot.wav`,
+  ambiance: `${BASE_PATH}sounds/bgm1.mp3`, // Initial track
+  click: `${BASE_PATH}sounds/click.wav`,
+  loss: `${BASE_PATH}sounds/loss.wav`,
+  swipe: `${BASE_PATH}sounds/swipe.wav`,
+  claim: `${BASE_PATH}sounds/claim.wav`,
+  continue: `${BASE_PATH}sounds/continue.wav`,
+  deposit: `${BASE_PATH}sounds/deposit.wav`,
+  withdraw: `${BASE_PATH}sounds/withdraw.wav`,
+  buy_session: `${BASE_PATH}sounds/buy_session.wav`,
+  click_cw: `${BASE_PATH}sounds/click_cw.wav`,
+  click_ccw: `${BASE_PATH}sounds/click_ccw.wav`,
 };
 
 const BGM_PLAYLIST = [
-  '/sounds/bgm1.mp3',
-  '/sounds/bgm2.wav',
-  '/sounds/bgm3.wav',
+  `${BASE_PATH}sounds/bgm1.mp3`,
+  `${BASE_PATH}sounds/bgm2.wav`,
+  `${BASE_PATH}sounds/bgm3.wav`,
 ];
 
 export const useSoundEffects = () => {
@@ -85,7 +89,10 @@ export const useSoundEffects = () => {
     const ambiance = audioRefs.current.ambiance;
     if (ambiance) {
       const nextTrack = BGM_PLAYLIST[currentBgmIndex];
-      if (ambiance.src !== window.location.origin + nextTrack && ambiance.src !== nextTrack) {
+      // Check if the track needs to be updated (handle both absolute and relative URLs)
+      const currentSrc = ambiance.src;
+      const expectedSrc = new URL(nextTrack, window.location.origin).href;
+      if (currentSrc !== expectedSrc && !currentSrc.endsWith(nextTrack)) {
         const wasPlaying = !ambiance.paused;
         ambiance.src = nextTrack;
         if (wasPlaying && !isMuted) {
