@@ -82,7 +82,7 @@ export function TimelockOperations({ proposals, isLoading, governance }: Timeloc
   const [proposalDeadlines, setProposalDeadlines] = useState<Map<string, bigint | undefined>>(new Map());
   const [timelockFilter, setTimelockFilter] = useState<TimelockFilterType>('queued');
   const [displayCount, setDisplayCount] = useState<number>(5);
-  const { data: blockNumber } = useBlockNumber({ watch: true });
+  useBlockNumber({ watch: true }); // Keep watching for updates but don't use the value
 
   // Reset display count when filter changes
   useEffect(() => {
@@ -193,8 +193,8 @@ export function TimelockOperations({ proposals, isLoading, governance }: Timeloc
         <button
           onClick={() => setTimelockFilter('queued')}
           className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${timelockFilter === 'queued'
-              ? 'border-blue-500 text-blue-400'
-              : 'border-transparent text-slate-400 hover:text-slate-300'
+            ? 'border-blue-500 text-blue-400'
+            : 'border-transparent text-slate-400 hover:text-slate-300'
             }`}
         >
           <div className="flex items-center gap-2">
@@ -205,8 +205,8 @@ export function TimelockOperations({ proposals, isLoading, governance }: Timeloc
         <button
           onClick={() => setTimelockFilter('executed')}
           className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${timelockFilter === 'executed'
-              ? 'border-green-500 text-green-400'
-              : 'border-transparent text-slate-400 hover:text-slate-300'
+            ? 'border-green-500 text-green-400'
+            : 'border-transparent text-slate-400 hover:text-slate-300'
             }`}
         >
           <div className="flex items-center gap-2">
