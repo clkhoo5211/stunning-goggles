@@ -62,11 +62,11 @@ describe('DiceGame full-flow wiring (frontend)', () => {
       currentTimestamp: '0',
     };
 
-    mockPlayRound.mockResolvedValue();
-    mockBuyRounds.mockResolvedValue();
-    mockClaimPendingReward.mockResolvedValue();
-    mockForfeitPendingReward.mockResolvedValue();
-    mockRefetchPlayerState.mockResolvedValue();
+    mockPlayRound.mockResolvedValue(undefined);
+    mockBuyRounds.mockResolvedValue(undefined);
+    mockClaimPendingReward.mockResolvedValue(undefined);
+    mockForfeitPendingReward.mockResolvedValue(undefined);
+    mockRefetchPlayerState.mockResolvedValue(undefined);
   });
 
   it('runs a pseudo full-flow: buy session, play rounds, handle pending reward buttons', async () => {

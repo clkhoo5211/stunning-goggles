@@ -1,13 +1,15 @@
 .game-board-cell {
-  @apply bg-slate-900/90 backdrop-blur-md border-2 border-purple-500/50 rounded-xl text-center font-bold transition-all duration-300 cursor-pointer flex flex-col items-center justify-center shadow-[0_0_15px_rgba(107,33,168,0.4)] relative overflow-hidden;
+  @apply bg-slate-900/90 backdrop-blur-md border-2 border-purple-500/50 rounded-xl text-center font-bold transition-all duration-300 cursor-pointer flex flex-col items-center justify-center relative overflow-hidden;
   width: 100%;
   height: 100%;
   padding: clamp(4px, 1.5vw, 10px);
   font-size: clamp(0.75rem, 1.7vw, 1.05rem);
+  box-shadow: 0 0 15px rgba(107, 33, 168, 0.4);
 }
 
 .game-board-cell--active {
-  @apply ring-2 ring-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.8)] scale-105 z-10 border-yellow-300;
+  @apply ring-2 ring-yellow-400 scale-105 z-10 border-yellow-300;
+  box-shadow: 0 0 30px rgba(250, 204, 21, 0.8);
 }
 
 .game-board-cell__label {
@@ -15,8 +17,9 @@
 }
 
 .game-board-cell__payout {
-  @apply text-base md:text-lg font-black text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] z-10;
-  font-family: 'Outfit', sans-serif; /* Ensure a modern font is used if available, or fallback */
+  @apply text-base md:text-lg font-black text-white z-10;
+  font-family: 'Outfit', sans-serif;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.8));
 }
 
 /* --- Casino Theme Classes --- */
@@ -32,7 +35,8 @@
 }
 
 .casino-cell--jackpot .game-board-cell__payout {
-  @apply text-white text-xl md:text-2xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)];
+  @apply text-white text-xl md:text-2xl;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
 }
 
 /* High Value Cell (>= 1400) */
@@ -74,7 +78,8 @@
 }
 
 .casino-cell--penalty .game-board-cell__payout {
-  @apply text-green-400 drop-shadow-[0_0_8px_rgba(74,222,128,0.6)];
+  @apply text-green-400;
+  filter: drop-shadow(0 0 8px rgba(74, 222, 128, 0.6));
 }
 
 /* --- Decorative Elements --- */
@@ -87,9 +92,10 @@
   background: linear-gradient(to bottom, #ef4444, #991b1b);
   bottom: -10px;
   border-radius: 2px;
-  box-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
   z-index: 20;
 }
+
 .cell-tassel::after {
   content: '';
   position: absolute;
@@ -99,11 +105,17 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #fbbf24; /* Gold knob */
+  background: #fbbf24;
+  /* Gold knob */
 }
 
-.cell-tassel-left { left: 10px; }
-.cell-tassel-right { right: 10px; }
+.cell-tassel-left {
+  left: 10px;
+}
+
+.cell-tassel-right {
+  right: 10px;
+}
 
 /* Treasure Icon for Jackpot */
 .cell-icon-treasure {
@@ -112,7 +124,7 @@
   right: 5px;
   font-size: 1.2rem;
   opacity: 0.8;
-  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5));
   animation: float-icon 3s ease-in-out infinite;
 }
 
@@ -122,7 +134,8 @@
   width: 8px;
   height: 8px;
   border-style: solid;
-  border-color: #fbbf24; /* Gold */
+  border-color: #fbbf24;
+  /* Gold */
   opacity: 0.6;
   transition: all 0.3s ease;
 }
@@ -132,23 +145,128 @@
   opacity: 1;
 }
 
-.cell-corner-tl { top: 2px; left: 2px; border-width: 2px 0 0 2px; border-top-left-radius: 4px; }
-.cell-corner-tr { top: 2px; right: 2px; border-width: 2px 2px 0 0; border-top-right-radius: 4px; }
-.cell-corner-bl { bottom: 2px; left: 2px; border-width: 0 0 2px 2px; border-bottom-left-radius: 4px; }
-.cell-corner-br { bottom: 2px; right: 2px; border-width: 0 2px 2px 0; border-bottom-right-radius: 4px; }
+.cell-corner-tl {
+  top: 2px;
+  left: 2px;
+  border-width: 2px 0 0 2px;
+  border-top-left-radius: 4px;
+}
+
+.cell-corner-tr {
+  top: 2px;
+  right: 2px;
+  border-width: 2px 2px 0 0;
+  border-top-right-radius: 4px;
+}
+
+.cell-corner-bl {
+  bottom: 2px;
+  left: 2px;
+  border-width: 0 0 2px 2px;
+  border-bottom-left-radius: 4px;
+}
+
+.cell-corner-br {
+  bottom: 2px;
+  right: 2px;
+  border-width: 0 2px 2px 0;
+  border-bottom-right-radius: 4px;
+}
 
 /* Animations */
 @keyframes float-icon {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.3), inset 0 0 20px rgba(0, 0, 0, 0.8);
+  }
+
+  50% {
+    box-shadow: 0 0 30px rgba(34, 197, 94, 0.6), inset 0 0 20px rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* Shimmer effect on high-value and jackpot cells */
+.casino-cell--high::before,
+.casino-cell--jackpot::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #FFD700, #FFA500, #FFD700, transparent);
+  background-size: 200% 100%;
+  animation: shimmer 3s linear infinite;
+  z-index: 1;
+}
+
+.casino-cell--high::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #C026D3, #E879F9, #C026D3, transparent);
+  background-size: 200% 100%;
+  animation: shimmer 3s linear infinite reverse;
+  z-index: 1;
+}
+
+/* Pulse animation for penalty cell */
+.casino-cell--penalty {
+  animation: pulse-glow 2s ease-in-out infinite;
 }
 
 @media (max-width: 768px) {
   .game-board-cell {
     @apply p-1;
   }
-  .cell-tassel { height: 12px; width: 4px; bottom: -6px; }
-  .cell-tassel::after { width: 5px; height: 5px; bottom: -2px; }
-  .cell-corner { width: 6px; height: 6px; border-width: 1.5px; }
-}
 
+  .cell-tassel {
+    height: 12px;
+    width: 4px;
+    bottom: -6px;
+  }
+
+  .cell-tassel::after {
+    width: 5px;
+    height: 5px;
+    bottom: -2px;
+  }
+
+  .cell-corner {
+    width: 6px;
+    height: 6px;
+    border-width: 1.5px;
+  }
+
+  .casino-cell--high::before,
+  .casino-cell--jackpot::before,
+  .casino-cell--high::after {
+    height: 2px;
+  }
+}

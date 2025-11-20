@@ -167,7 +167,33 @@ export function TimelockOperations({ proposals, isLoading, governance }: Timeloc
   const hasMore = timelockFilter === 'executed' && filteredProposals.length > displayCount;
 
   return (
-    <div className="card p-6">
+    <div className="space-y-8">
+      {/* Filter Tabs */}
+      <div className="flex justify-center">
+        <div className="bg-slate-900/50 backdrop-blur-md p-1 rounded-xl border border-white/5 flex">
+          <button
+            onClick={() => setTimelockFilter('queued')}
+            className={`px-6 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${timelockFilter === 'queued'
+                ? 'bg-yellow-500/10 text-yellow-400 shadow-sm border border-yellow-500/20'
+                : 'text-slate-400 hover:text-slate-200'
+              }`}
+          >
+            <Hourglass className="w-4 h-4" />
+            Queued
+          </button>
+          <button
+            onClick={() => setTimelockFilter('executed')}
+            className={`px-6 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${timelockFilter === 'executed'
+                ? 'bg-purple-500/10 text-purple-400 shadow-sm border border-purple-500/20'
+                : 'text-slate-400 hover:text-slate-200'
+              }`}
+          >
+            <CheckCircle className="w-4 h-4" />
+            Executed
+          </button>
+        </div>
+      </div>
+
       {/* Fetch states and deadlines for all proposals (hidden) */}
       {proposals.map((proposal) => (
         <div key={proposal.proposalId.toString()} className="hidden">
@@ -183,124 +209,173 @@ export function TimelockOperations({ proposals, isLoading, governance }: Timeloc
         </div>
       ))}
 
-      <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-        <Clock className="w-5 h-5 text-slate-400" />
-        Timelock Operations
-      </h2>
+      {/* Queued Proposals Section */}
+      {timelockFilter === 'queued' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between px-2">
+            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+              <Hourglass className="w-5 h-5 text-yellow-500" />
+              Queued Proposals
+              <span className="text-xs font-normal text-slate-500 ml-2 bg-slate-800 px-2 py-0.5 rounded-full">
+                {queuedCount}
+              </span>
+            </h3>
+            <p className="text-sm text-slate-400">
+              Waiting for timelock delay to pass
+            </p>
+          </div>
 
-      {/* Filter Tabs */}
-      <div className="flex gap-2 mb-6 border-b border-slate-700">
-        <button
-          onClick={() => setTimelockFilter('queued')}
-          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${timelockFilter === 'queued'
-            ? 'border-blue-500 text-blue-400'
-            : 'border-transparent text-slate-400 hover:text-slate-300'
-            }`}
-        >
-          <div className="flex items-center gap-2">
-            <Hourglass className="w-4 h-4" />
-            Queued ({queuedCount})
-          </div>
-        </button>
-        <button
-          onClick={() => setTimelockFilter('executed')}
-          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${timelockFilter === 'executed'
-            ? 'border-green-500 text-green-400'
-            : 'border-transparent text-slate-400 hover:text-slate-300'
-            }`}
-        >
-          <div className="flex items-center gap-2">
-            <CheckCircle className="w-4 h-4" />
-            Executed ({executedCount})
-          </div>
-        </button>
-      </div>
-
-      <div className="space-y-4">
-        {isLoading ? (
-          <div className="text-center py-12 text-slate-400">
-            <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin opacity-50" />
-            <p>Loading proposals...</p>
-          </div>
-        ) : proposals.length === 0 ? (
-          <div className="text-center py-12 text-slate-400">
-            <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>No proposals yet.</p>
-          </div>
-        ) : !statesLoaded ? (
-          <div className="text-center py-12 text-slate-400">
-            <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin opacity-50" />
-            <p>Loading proposal states...</p>
-          </div>
-        ) : filteredProposals.length === 0 ? (
-          <div className="text-center py-12 text-slate-400">
-            {timelockFilter === 'queued' ? (
-              <>
-                <Hourglass className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>No queued proposals.</p>
-                <p className="text-sm mt-2">Proposals that are queued and waiting for timelock delay will appear here.</p>
-              </>
-            ) : (
-              <>
-                <CheckCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>No executed proposals.</p>
-                <p className="text-sm mt-2">Proposals that have been executed through timelock will appear here.</p>
-              </>
-            )}
-          </div>
-        ) : (
-          <>
-            {displayedProposals.map((proposal) => (
-              <ProposalCard
-                key={proposal.proposalId.toString()}
-                proposalId={proposal.proposalId}
-                description={proposal.description}
-                onVote={async (proposalId, support) => {
-                  await governance.castVote(proposalId, support);
-                }}
-                onQueue={async () => {
-                  const descriptionHash = governance.hashDescription(proposal.description);
-                  await governance.queue(
-                    proposal.targets,
-                    proposal.values,
-                    proposal.calldatas,
-                    descriptionHash
-                  );
-                }}
-                onExecute={async () => {
-                  const descriptionHash = governance.hashDescription(proposal.description);
-                  await governance.execute(
-                    proposal.targets,
-                    proposal.values,
-                    proposal.calldatas,
-                    descriptionHash
-                  );
-                }}
-                onCancel={async () => {
-                  const descriptionHash = governance.hashDescription(proposal.description);
-                  await governance.cancel(
-                    proposal.targets,
-                    proposal.values,
-                    proposal.calldatas,
-                    descriptionHash
-                  );
-                }}
-              />
-            ))}
-            {hasMore && (
-              <div className="flex justify-center pt-4">
-                <button
-                  onClick={() => setDisplayCount((prev) => prev + 5)}
-                  className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-lg font-medium text-slate-200 transition-colors"
-                >
-                  <ChevronDown className="w-5 h-5" />
-                  Show More ({filteredProposals.length - displayCount} remaining)
-                </button>
+          {isLoading || !statesLoaded ? (
+            <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+              <Loader2 className="w-8 h-8 animate-spin mb-2" />
+              <p>Loading queued proposals...</p>
+            </div>
+          ) : filteredProposals.length === 0 ? (
+            <div className="rounded-2xl bg-slate-900/40 border border-white/5 p-12 text-center">
+              <div className="w-16 h-16 rounded-full bg-slate-800/50 flex items-center justify-center mx-auto mb-4">
+                <Hourglass className="w-8 h-8 text-slate-600" />
               </div>
-            )}
-          </>
-        )}
-      </div>
+              <h3 className="text-lg font-medium text-slate-300 mb-1">No Queued Proposals</h3>
+              <p className="text-slate-500 max-w-xs mx-auto">
+                There are currently no proposals in the timelock queue.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {displayedProposals.map((proposal) => (
+                <ProposalCard
+                  key={proposal.proposalId.toString()}
+                  proposalId={proposal.proposalId}
+                  description={proposal.description}
+                  onVote={async (proposalId, support) => {
+                    await governance.castVote(proposalId, support);
+                  }}
+                  onQueue={async () => {
+                    const descriptionHash = governance.hashDescription(proposal.description);
+                    await governance.queue(
+                      proposal.targets,
+                      proposal.values,
+                      proposal.calldatas,
+                      descriptionHash
+                    );
+                  }}
+                  onExecute={async () => {
+                    const descriptionHash = governance.hashDescription(proposal.description);
+                    await governance.execute(
+                      proposal.targets,
+                      proposal.values,
+                      proposal.calldatas,
+                      descriptionHash
+                    );
+                  }}
+                  onCancel={async () => {
+                    const descriptionHash = governance.hashDescription(proposal.description);
+                    await governance.cancel(
+                      proposal.targets,
+                      proposal.values,
+                      proposal.calldatas,
+                      descriptionHash
+                    );
+                  }}
+                />
+              ))}
+
+              {hasMore && (
+                <button
+                  onClick={() => setDisplayCount(prev => prev + 5)}
+                  className="w-full py-3 rounded-xl border border-white/5 bg-slate-900/30 text-slate-400 hover:text-white hover:bg-slate-900/50 transition-all flex items-center justify-center gap-2 text-sm font-medium"
+                >
+                  Show More <ChevronDown className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Executed Proposals Section */}
+      {timelockFilter === 'executed' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between px-2">
+            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-purple-500" />
+              Executed Proposals
+              <span className="text-xs font-normal text-slate-500 ml-2 bg-slate-800 px-2 py-0.5 rounded-full">
+                {executedCount}
+              </span>
+            </h3>
+            <p className="text-sm text-slate-400">
+              Successfully executed via Timelock
+            </p>
+          </div>
+
+          {isLoading || !statesLoaded ? (
+            <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+              <Loader2 className="w-8 h-8 animate-spin mb-2" />
+              <p>Loading executed proposals...</p>
+            </div>
+          ) : filteredProposals.length === 0 ? (
+            <div className="rounded-2xl bg-slate-900/40 border border-white/5 p-12 text-center">
+              <div className="w-16 h-16 rounded-full bg-slate-800/50 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-8 h-8 text-slate-600" />
+              </div>
+              <h3 className="text-lg font-medium text-slate-300 mb-1">No Executed Proposals</h3>
+              <p className="text-slate-500 max-w-xs mx-auto">
+                No proposals have been executed yet.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {displayedProposals.map((proposal) => (
+                <ProposalCard
+                  key={proposal.proposalId.toString()}
+                  proposalId={proposal.proposalId}
+                  description={proposal.description}
+                  onVote={async (proposalId, support) => {
+                    await governance.castVote(proposalId, support);
+                  }}
+                  onQueue={async () => {
+                    const descriptionHash = governance.hashDescription(proposal.description);
+                    await governance.queue(
+                      proposal.targets,
+                      proposal.values,
+                      proposal.calldatas,
+                      descriptionHash
+                    );
+                  }}
+                  onExecute={async () => {
+                    const descriptionHash = governance.hashDescription(proposal.description);
+                    await governance.execute(
+                      proposal.targets,
+                      proposal.values,
+                      proposal.calldatas,
+                      descriptionHash
+                    );
+                  }}
+                  onCancel={async () => {
+                    const descriptionHash = governance.hashDescription(proposal.description);
+                    await governance.cancel(
+                      proposal.targets,
+                      proposal.values,
+                      proposal.calldatas,
+                      descriptionHash
+                    );
+                  }}
+                />
+              ))}
+
+              {hasMore && (
+                <button
+                  onClick={() => setDisplayCount(prev => prev + 5)}
+                  className="w-full py-3 rounded-xl border border-white/5 bg-slate-900/30 text-slate-400 hover:text-white hover:bg-slate-900/50 transition-all flex items-center justify-center gap-2 text-sm font-medium"
+                >
+                  Show More <ChevronDown className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

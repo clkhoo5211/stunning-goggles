@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Dice3D } from '@components/ui/Dice3D';
 import { AnimatedNumber } from '@components/ui/animated-number';
+import { ParticleEffects } from '@components/ui/ParticleEffects';
 import './DiceRollerView.css';
 
 export interface DiceRollerViewProps {
@@ -31,6 +32,14 @@ export function DiceRollerView({
     >
       {/* Decorative background glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-32 bg-purple-500/10 blur-3xl pointer-events-none" />
+
+      {/* Particle Effects for Baozi */}
+      {isBaozi && !isRolling && (
+        <>
+          <ParticleEffects type="confetti" trigger={true} />
+          <ParticleEffects type="goldCoins" trigger={true} />
+        </>
+      )}
 
       <div className="relative z-10 flex flex-col items-center">
         <div className="text-center mb-6">
@@ -99,19 +108,61 @@ export function DiceRollerView({
 
         {isBaozi && !isRolling && (
           <motion.div
-            className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-2xl"
+            className="absolute inset-0 z-20 flex items-center justify-center bg-black/70 backdrop-blur-sm rounded-2xl"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
             <motion.div
-              className="text-center p-6 bg-gradient-to-br from-red-900 to-red-950 border-2 border-yellow-500 rounded-xl shadow-[0_0_50px_rgba(234,179,8,0.5)]"
+              className="text-center p-8 bg-gradient-to-br from-red-900 via-red-950 to-black border-4 border-yellow-500 rounded-2xl shadow-[0_0_60px_rgba(234,179,8,0.8)] relative overflow-hidden"
               initial={{ scale: 0.5, rotate: -10 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
             >
-              <div className="text-6xl mb-2">🎉</div>
-              <h3 className="text-3xl font-black text-yellow-400 uppercase tracking-widest mb-2">Leopard!</h3>
-              <p className="text-white font-bold">All {diceSlots[0]}s Match!</p>
+              {/* Animated glow effect */}
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-yellow-500/20 via-red-500/20 to-yellow-500/20"
+                animate={{
+                  backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: 'linear',
+                }}
+                style={{ backgroundSize: '200% 200%' }}
+              />
+
+              {/* Content */}
+              <div className="relative z-10">
+                <motion.div
+                  className="text-7xl mb-3 flex gap-2 justify-center"
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    rotate: [0, 10, -10, 0],
+                  }}
+                  transition={{
+                    duration: 1,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                  }}
+                >
+                  🎉 🎊 💰 ✨
+                </motion.div>
+                <h3 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-300 uppercase tracking-widest mb-3 drop-shadow-[0_0_20px_rgba(234,179,8,0.8)]">
+                  豹子！
+                </h3>
+                <h4 className="text-3xl font-black text-yellow-400 uppercase tracking-widest mb-2">
+                  Leopard Jackpot!
+                </h4>
+                <p className="text-white font-bold text-xl mb-2">All {diceSlots[0]}s Match!</p>
+                <motion.p
+                  className="text-yellow-200 text-lg font-semibold"
+                  animate={{ opacity: [0.7, 1, 0.7] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                >
+                  🏮 Instant Bonus Payout! 🏮
+                </motion.p>
+              </div>
             </motion.div>
           </motion.div>
         )}
