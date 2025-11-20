@@ -5,8 +5,8 @@ import path from 'path';
 
 export default defineConfig({
   // Set base to '/' for custom domain or '/repo-name/' for GitHub Pages
-  // Change this to your repository name when deploying to GitHub Pages
-  base: process.env.GITHUB_PAGES === 'true' ? '/' : '/',
+  // For GitHub Pages at https://clkhoo5211.github.io/stunning-goggles/
+  base: '/stunning-goggles/',
 
   plugins: [
     react(),
@@ -23,8 +23,8 @@ export default defineConfig({
         theme_color: '#0ea5e9',
         background_color: '#0f172a',
         display: 'standalone',
-        scope: '/',
-        start_url: '/',
+        scope: '/stunning-goggles/',
+        start_url: '/stunning-goggles/',
         orientation: 'portrait',
 
         icons: [
