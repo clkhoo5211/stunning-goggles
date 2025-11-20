@@ -1,5 +1,5 @@
 import { useAccount, useReadContract, useWriteContract, useBlockNumber } from 'wagmi';
-import { formatUnits, parseUnits, encodeFunctionData, keccak256, stringToBytes } from 'viem';
+import { formatUnits, keccak256, stringToBytes } from 'viem';
 import { toast } from 'sonner';
 import addresses from '@lib/contracts/addresses.json';
 import { luckGovernorAbi } from '@lib/contracts/abi/luckGovernor';
@@ -144,7 +144,7 @@ export function useGovernanceContract() {
     quorumNumerator: quorumNumerator ? Number(quorumNumerator) : undefined,
     quorumDenominator: quorumDenominator ? Number(quorumDenominator) : undefined,
     quorumPercentage,
-    currentQuorum: currentQuorum ? formatUnits(currentQuorum, 18) : undefined,
+    currentQuorum: currentQuorum ? formatUnits(BigInt(Math.floor(currentQuorum)), 18) : undefined,
 
     // Timelock settings
     minDelay: minDelay ? Number(minDelay) : undefined,

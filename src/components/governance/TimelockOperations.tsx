@@ -27,15 +27,15 @@ enum ProposalState {
 type TimelockFilterType = 'queued' | 'executed';
 
 // Component to fetch state for a single proposal
-function ProposalStateFetcher({ 
-  proposalId, 
-  onStateChange 
-}: { 
-  proposalId: bigint; 
+function ProposalStateFetcher({
+  proposalId,
+  onStateChange
+}: {
+  proposalId: bigint;
   onStateChange: (state: ProposalState | undefined) => void;
 }) {
   const governorAddress = addresses.contracts.LuckGovernor as `0x${string}`;
-  
+
   const { data: proposalState } = useReadContract({
     address: governorAddress,
     abi: luckGovernorAbi,
@@ -53,15 +53,15 @@ function ProposalStateFetcher({
 }
 
 // Component to fetch deadline for a single proposal
-function ProposalDeadlineFetcher({ 
-  proposalId, 
-  onDeadlineChange 
-}: { 
-  proposalId: bigint; 
+function ProposalDeadlineFetcher({
+  proposalId,
+  onDeadlineChange
+}: {
+  proposalId: bigint;
   onDeadlineChange: (deadline: bigint | undefined) => void;
 }) {
   const governorAddress = addresses.contracts.LuckGovernor as `0x${string}`;
-  
+
   const { data: proposalDeadline } = useReadContract({
     address: governorAddress,
     abi: luckGovernorAbi,
@@ -112,7 +112,7 @@ export function TimelockOperations({ proposals, isLoading, governance }: Timeloc
     const filtered = proposals.filter((proposal) => {
       const state = proposalStates.get(proposal.proposalId.toString());
       if (state === undefined) return false;
-      
+
       if (timelockFilter === 'queued') {
         return state === ProposalState.Queued;
       } else if (timelockFilter === 'executed') {
@@ -127,7 +127,7 @@ export function TimelockOperations({ proposals, isLoading, governance }: Timeloc
       return filtered.sort((a, b) => {
         const deadlineA = proposalDeadlines.get(a.proposalId.toString());
         const deadlineB = proposalDeadlines.get(b.proposalId.toString());
-        
+
         // If both have deadlines, sort by deadline (descending - most recent first)
         if (deadlineA && deadlineB) {
           return Number(deadlineB - deadlineA);
@@ -155,7 +155,7 @@ export function TimelockOperations({ proposals, isLoading, governance }: Timeloc
   }).length;
 
   // Check if we're still loading states
-  const statesLoaded = proposals.length === 0 || proposals.every((p) => 
+  const statesLoaded = proposals.length === 0 || proposals.every((p) =>
     proposalStates.has(p.proposalId.toString())
   );
 
@@ -192,11 +192,10 @@ export function TimelockOperations({ proposals, isLoading, governance }: Timeloc
       <div className="flex gap-2 mb-6 border-b border-slate-700">
         <button
           onClick={() => setTimelockFilter('queued')}
-          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
-            timelockFilter === 'queued'
+          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${timelockFilter === 'queued'
               ? 'border-blue-500 text-blue-400'
               : 'border-transparent text-slate-400 hover:text-slate-300'
-          }`}
+            }`}
         >
           <div className="flex items-center gap-2">
             <Hourglass className="w-4 h-4" />
@@ -205,11 +204,10 @@ export function TimelockOperations({ proposals, isLoading, governance }: Timeloc
         </button>
         <button
           onClick={() => setTimelockFilter('executed')}
-          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
-            timelockFilter === 'executed'
+          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${timelockFilter === 'executed'
               ? 'border-green-500 text-green-400'
               : 'border-transparent text-slate-400 hover:text-slate-300'
-          }`}
+            }`}
         >
           <div className="flex items-center gap-2">
             <CheckCircle className="w-4 h-4" />
@@ -260,7 +258,7 @@ export function TimelockOperations({ proposals, isLoading, governance }: Timeloc
                 onVote={async (proposalId, support) => {
                   await governance.castVote(proposalId, support);
                 }}
-                onQueue={async (proposalId) => {
+                onQueue={async () => {
                   const descriptionHash = governance.hashDescription(proposal.description);
                   await governance.queue(
                     proposal.targets,
@@ -269,7 +267,7 @@ export function TimelockOperations({ proposals, isLoading, governance }: Timeloc
                     descriptionHash
                   );
                 }}
-                onExecute={async (proposalId) => {
+                onExecute={async () => {
                   const descriptionHash = governance.hashDescription(proposal.description);
                   await governance.execute(
                     proposal.targets,
@@ -278,7 +276,7 @@ export function TimelockOperations({ proposals, isLoading, governance }: Timeloc
                     descriptionHash
                   );
                 }}
-                onCancel={async (proposalId) => {
+                onCancel={async () => {
                   const descriptionHash = governance.hashDescription(proposal.description);
                   await governance.cancel(
                     proposal.targets,

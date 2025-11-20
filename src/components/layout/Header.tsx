@@ -33,21 +33,21 @@ export function Header() {
     if (!element || !navContainerRef.current) return;
 
     const container = navContainerRef.current;
-    
+
     // Only scroll on smaller screens where navigation is scrollable
     // On desktop (lg+), navigation is centered and doesn't need scrolling
     if (window.innerWidth >= 1024) return; // lg breakpoint
-    
+
     const containerRect = container.getBoundingClientRect();
     const elementRect = element.getBoundingClientRect();
-    
+
     // Calculate the center position
     const containerCenter = containerRect.left + containerRect.width / 2;
     const elementCenter = elementRect.left + elementRect.width / 2;
-    
+
     // Calculate scroll position to center the element
     const scrollLeft = container.scrollLeft + (elementCenter - containerCenter);
-    
+
     // Smooth scroll to center
     container.scrollTo({
       left: scrollLeft,
@@ -55,7 +55,7 @@ export function Header() {
     });
   };
 
-  const handleNavClick = (path: string, e: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleNavClick = (path: string) => {
     const element = navItemRefs.current[path];
     if (element) {
       // Small delay to ensure the route change has started
@@ -69,7 +69,7 @@ export function Header() {
   useEffect(() => {
     const activePath = location.pathname;
     const activeElement = navItemRefs.current[activePath];
-    
+
     if (activeElement) {
       // Delay to ensure DOM has updated
       setTimeout(() => {
@@ -83,8 +83,8 @@ export function Header() {
       <div className="w-full px-3 sm:px-4 lg:px-6 py-3 sm:py-4">
         <div className="flex items-center justify-between gap-2 sm:gap-3 lg:gap-4">
           {/* Logo */}
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className="flex items-center space-x-2 sm:space-x-3 group flex-shrink-0"
           >
             <div className="relative w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-500 via-purple-500 to-purple-600 rounded-xl flex items-center justify-center transform transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 shadow-lg shadow-purple-500/30">
@@ -103,7 +103,7 @@ export function Header() {
             <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-12 bg-gradient-to-r from-slate-900/95 via-blue-900/50 to-transparent pointer-events-none z-10 lg:hidden"></div>
             {/* Right fade gradient */}
             <div className="absolute right-0 top-0 bottom-0 w-8 sm:w-12 bg-gradient-to-l from-slate-900/95 via-blue-900/50 to-transparent pointer-events-none z-10 lg:hidden"></div>
-            <div 
+            <div
               ref={navContainerRef}
               className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth pb-1 -mx-1 px-1"
             >
@@ -116,12 +116,11 @@ export function Header() {
                       navItemRefs.current[item.path] = el;
                     }}
                     to={item.path}
-                    onClick={(e) => handleNavClick(item.path, e)}
-                    className={`relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-all duration-200 flex-shrink-0 group ${
-                      isActive(item.path)
-                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-purple-500/30'
-                        : 'text-slate-300 hover:text-white hover:bg-white/10'
-                    }`}
+                    onClick={() => handleNavClick(item.path)}
+                    className={`relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-all duration-200 flex-shrink-0 group ${isActive(item.path)
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-purple-500/30'
+                      : 'text-slate-300 hover:text-white hover:bg-white/10'
+                      }`}
                   >
                     <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-200 ${isActive(item.path) ? 'scale-110' : 'group-hover:scale-110'}`} />
                     <span>{item.name}</span>
