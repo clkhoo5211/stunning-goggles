@@ -33,9 +33,7 @@ jobs:
           cache-dependency-path: 'package-lock.json'
       
       - name: Install dependencies
-        run: |
-          npm ci
-          npm rebuild @rollup/rollup-linux-x64-gnu --optional || true
+        run: npm install --frozen-lockfile
       
       - name: Build project
         run: npm run build
