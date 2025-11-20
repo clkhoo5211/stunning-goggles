@@ -1,0 +1,39 @@
+.animated-number {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.25s ease;
+  color: inherit;
+  background: inherit;
+  -webkit-background-clip: inherit;
+  background-clip: inherit;
+  -webkit-text-fill-color: inherit;
+  z-index: 0;
+}
+
+.animated-number::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.9);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  z-index: -1;
+}
+
+.animated-number--up::after {
+  background: linear-gradient(120deg, rgba(34, 197, 94, 0.18), rgba(14, 165, 233, 0.1));
+  box-shadow: 0 0 18px rgba(34, 197, 94, 0.25);
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.animated-number--down::after {
+  background: linear-gradient(120deg, rgba(248, 113, 113, 0.15), rgba(244, 114, 182, 0.1));
+  box-shadow: 0 0 18px rgba(248, 113, 113, 0.25);
+  opacity: 1;
+  transform: scale(1.05);
+}

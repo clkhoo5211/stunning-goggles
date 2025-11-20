@@ -1,0 +1,43 @@
+.deposit-modal {
+  @apply space-y-4;
+}
+
+.deposit-modal__description {
+  @apply text-sm text-slate-400;
+}
+
+.deposit-modal__highlight {
+  @apply text-blue-300 font-semibold;
+}
+
+.deposit-modal__meta {
+  @apply flex items-center justify-between text-xs text-slate-500;
+}
+
+.deposit-modal__meta-label {
+  @apply text-xs text-slate-500;
+}
+
+.deposit-modal__field {
+  @apply space-y-2;
+}
+
+.deposit-modal__label {
+  @apply text-xs uppercase tracking-wide text-slate-400;
+}
+
+.deposit-modal__input {
+  display: block;
+}
+
+.deposit-modal__allowance {
+  @apply rounded-lg bg-blue-500/10 border border-blue-500/20 p-3 text-xs text-blue-200;
+}
+
+.deposit-modal__actions {
+  @apply flex flex-col-reverse gap-3 sm:flex-row sm:justify-end;
+}
+
+.deposit-modal__loading {
+  @apply flex items-center gap-2;
+}

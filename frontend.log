@@ -1,0 +1,266 @@
+
+> luckchain-frontend@1.0.0 dev
+> vite
+
+Port 3000 is in use, trying another one...
+Port 3001 is in use, trying another one...
+
+  VITE v5.4.21  ready in 166 ms
+
+  ➜  Local:   http://localhost:3002/
+  ➜  Network: use --host to expose
+11:24:10 PM [vite] page reload src/lib/reown.ts
+11:24:13 PM [vite] page reload src/lib/reown.ts
+
+PWA v0.17.5
+mode      generateSW
+precache  1 entries (0.00 KiB)
+files generated
+  dev-dist/sw.js.map
+  dev-dist/sw.js
+  dev-dist/workbox-7c5ad369.js.map
+  dev-dist/workbox-7c5ad369.js
+warnings
+  One of the glob patterns doesn't match any files. Please remove or fix the following: {
+  "globDirectory": "/Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/dev-dist",
+  "globPattern": "**/*.{js,wasm,css,html}",
+  "globIgnores": [
+    "**/node_modules/**/*",
+    "sw.js",
+    "workbox-*.js"
+  ]
+}
+
+11:37:44 PM [vite] hmr update /src/components/game/BalanceCard.tsx, /src/styles/index.css
+11:38:51 PM [vite] hmr update /src/pages/DiceGame.tsx, /src/styles/index.css
+11:40:10 PM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+11:41:09 PM [vite] hmr update /src/components/game/BalanceCard.tsx, /src/styles/index.css
+11:41:28 PM [vite] hmr update /src/components/game/BalanceCard.tsx, /src/styles/index.css
+11:41:28 PM [vite] hmr update /src/pages/DiceGame.tsx, /src/styles/index.css
+11:41:28 PM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+11:41:50 PM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+11:44:52 PM [vite] hmr update /src/components/game/BalanceCard.tsx, /src/styles/index.css
+11:46:04 PM [vite] hmr update /src/pages/DiceGame.tsx, /src/styles/index.css
+11:47:18 PM [vite] hmr update /src/components/ui/Modal.tsx, /src/styles/index.css
+11:47:18 PM [vite] hmr update /src/components/game/BalanceCard.tsx, /src/styles/index.css
+11:47:18 PM [vite] hmr update /src/pages/DiceGame.tsx, /src/styles/index.css
+12:10:54 AM [vite] hmr update /src/pages/DiceGame.tsx, /src/styles/index.css
+12:11:46 AM [vite] hmr update /src/pages/DiceGame.tsx, /src/styles/index.css
+12:12:18 AM [vite] page reload src/lib/reown.ts
+12:12:26 AM [vite] page reload src/lib/reown.ts
+12:12:29 AM [vite] page reload src/lib/reown.ts
+12:12:48 AM [vite] page reload src/lib/reown.ts
+12:15:02 AM [vite] page reload src/lib/reown.ts
+12:15:11 AM [vite] page reload src/lib/reown.ts
+12:18:56 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+12:20:38 AM [vite] page reload src/lib/reown.ts
+12:20:39 AM [vite] Pre-transform error: Transform failed with 1 error:
+/Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/src/lib/reown.ts:45:2: ERROR: Expected "}" but found "allowUnsupportedChain"
+12:20:39 AM [vite] Pre-transform error: Transform failed with 1 error:
+/Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/src/lib/reown.ts:45:2: ERROR: Expected "}" but found "allowUnsupportedChain"
+12:20:39 AM [vite] Pre-transform error: Transform failed with 1 error:
+/Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/src/lib/reown.ts:45:2: ERROR: Expected "}" but found "allowUnsupportedChain"
+12:20:39 AM [vite] Pre-transform error: Transform failed with 1 error:
+/Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/src/lib/reown.ts:45:2: ERROR: Expected "}" but found "allowUnsupportedChain"
+12:20:41 AM [vite] Internal server error: Transform failed with 1 error:
+/Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/src/lib/reown.ts:45:2: ERROR: Expected "}" but found "allowUnsupportedChain"
+  Plugin: vite:esbuild
+  File: /Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/src/lib/reown.ts:45:2
+  
+  Expected "}" but found "allowUnsupportedChain"
+  43 |    }
+  44 |    // Ensure both networks are accessible
+  45 |    allowUnsupportedChain: false,
+     |    ^
+  46 |    enableMobileFullScreen: true,
+  47 |    termsConditionsUrl: "https://reown.com/terms-of-service",
+  
+      at failureErrorWithLog (/Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/esbuild/lib/main.js:1472:15)
+      at /Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/esbuild/lib/main.js:755:50
+      at responseCallbacks.<computed> (/Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/esbuild/lib/main.js:622:9)
+      at handleIncomingPacket (/Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/esbuild/lib/main.js:677:12)
+      at Socket.readFromStdout (/Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/esbuild/lib/main.js:600:7)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:190:23)
+12:20:47 AM [vite] page reload src/lib/reown.ts
+12:21:01 AM [vite] hmr update /src/pages/GameHistory.tsx, /src/styles/index.css
+12:21:46 AM [vite] page reload src/lib/reown.ts
+12:22:10 AM [vite] page reload src/lib/reown.ts
+12:23:04 AM [vite] page reload src/lib/reown.ts
+12:24:46 AM [vite] page reload src/lib/reown.ts
+12:24:52 AM [vite] page reload src/lib/reown.ts
+12:25:00 AM [vite] page reload src/lib/reown.ts
+12:25:34 AM [vite] page reload src/hooks/useGameHistory.ts
+12:25:46 AM [vite] page reload src/lib/reown.ts
+12:26:25 AM [vite] page reload src/lib/reown.ts
+12:26:43 AM [vite] page reload src/lib/reown.ts
+12:31:31 AM [vite] page reload src/lib/reown.ts
+12:40:44 AM [vite] page reload src/lib/reown.ts
+12:41:43 AM [vite] page reload src/lib/wagmi.ts
+12:42:12 AM [vite] page reload src/lib/wagmi.ts
+12:49:11 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+12:50:05 AM [vite] page reload src/hooks/useGameHistory.ts
+12:51:08 AM [vite] hmr update /src/pages/GameHistory.tsx, /src/styles/index.css
+12:58:19 AM [vite] page reload src/lib/reown.ts
+12:58:19 AM [vite] page reload src/lib/wagmi.ts
+12:59:09 AM [vite] page reload src/lib/wagmi.ts
+12:59:19 AM [vite] page reload src/lib/reown.ts
+1:00:53 AM [vite] page reload src/hooks/useGameHistory.ts
+1:00:53 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+1:00:53 AM [vite] hmr update /src/pages/GameHistory.tsx, /src/styles/index.css
+1:02:13 AM [vite] page reload src/lib/wagmi.ts
+1:04:59 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+1:05:00 AM [vite] page reload src/hooks/useGameHistory.ts
+1:05:02 AM [vite] hmr update /src/pages/GameHistory.tsx, /src/styles/index.css
+1:05:02 AM [vite] hmr update /src/pages/GameHistory.tsx, /src/styles/index.css
+1:09:45 AM [vite] page reload src/lib/reown.ts
+1:10:10 AM [vite] page reload src/lib/wagmi.ts
+1:10:25 AM [vite] page reload src/lib/wagmi.ts
+1:13:39 AM [vite] page reload src/lib/wagmi.ts
+1:13:40 AM [vite] page reload src/lib/reown.ts
+1:18:40 AM [vite] page reload src/lib/reown.ts
+1:18:51 AM [vite] page reload src/lib/wagmi.ts
+1:20:45 AM [vite] page reload src/lib/reown.ts
+1:20:45 AM [vite] page reload src/lib/wagmi.ts
+1:22:10 AM [vite] page reload src/lib/reown.ts
+1:22:54 AM [vite] page reload src/lib/reown.ts
+1:23:02 AM [vite] page reload src/main.tsx
+1:23:10 AM [vite] page reload src/lib/wagmi.ts
+1:23:50 AM [vite] page reload src/main.tsx
+1:23:51 AM [vite] page reload src/lib/wagmi.ts
+1:23:57 AM [vite] page reload src/lib/wagmi.ts
+1:24:10 AM [vite] page reload src/lib/reown.ts
+1:24:21 AM [vite] page reload src/lib/reown.ts
+1:28:07 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+1:35:26 AM [vite] page reload src/hooks/useGameHistory.ts
+1:36:10 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+1:36:26 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+1:37:26 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+1:37:26 AM [vite] page reload src/hooks/useGameHistory.ts
+1:37:27 AM [vite] page reload src/hooks/useGameHistory.ts
+1:37:27 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+1:37:36 AM [vite] page reload src/hooks/useGameHistory.ts
+2:04:41 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+2:06:09 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:06:23 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:14:13 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+2:14:13 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:19:13 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+2:20:33 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:22:49 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+2:24:58 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:25:12 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:25:13 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:25:50 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:26:12 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:26:27 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:26:44 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:27:37 AM [vite] hmr update /src/styles/index.css
+2:27:51 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:28:07 AM [vite] hmr update /src/styles/index.css
+2:28:07 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:30:20 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:30:44 AM [vite] hmr update /src/styles/index.css
+2:31:04 AM [vite] hmr update /src/styles/index.css
+2:31:04 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:31:14 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:31:17 AM [vite] hmr update /src/styles/index.css
+2:32:36 AM [vite] hmr update /src/styles/index.css
+2:32:57 AM [vite] hmr update /src/styles/index.css
+project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)
+1:10:25 AM [vite] page reload src/lib/wagmi.ts
+1:10:29 AM [vite] Pre-transform error: Missing "./connectors/walletConnect" specifier in "wagmi" package
+1:10:29 AM [vite] Pre-transform error: Missing "./connectors/walletConnect" specifier in "wagmi" package
+1:10:30 AM [vite] Internal server error: Missing "./connectors/walletConnect" specifier in "wagmi" package
+  Plugin: vite:import-analysis
+  File: /Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/src/lib/wagmi.ts
+      at e (file:///Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:46042:25)
+      at n (file:///Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:46042:627)
+      at o (file:///Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:46042:1297)
+      at resolveExportsOrImports (file:///Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:46663:18)
+      at resolveDeepImport (file:///Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:46686:25)
+      at tryNodeResolve (file:///Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:46451:16)
+      at ResolveIdContext.resolveId (file:///Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:46201:19)
+      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+      at async PluginContainer.resolveId (file:///Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49017:22)
+      at async TransformPluginContext.resolve (file:///Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49178:15)
+      at async normalizeUrl (file:///Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64300:26)
+      at async file:///Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 3)
+      at async TransformPluginContext.transform (file:///Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///Users/khoo/Downloads/project4/projects/project-20251112-184728-blockchain-dice-game/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)
+1:13:39 AM [vite] page reload src/lib/wagmi.ts
+1:13:40 AM [vite] page reload src/lib/reown.ts
+1:18:40 AM [vite] page reload src/lib/reown.ts
+1:18:51 AM [vite] page reload src/lib/wagmi.ts
+1:20:45 AM [vite] page reload src/lib/reown.ts
+1:20:45 AM [vite] page reload src/lib/wagmi.ts
+1:22:10 AM [vite] page reload src/lib/reown.ts
+1:22:54 AM [vite] page reload src/lib/reown.ts
+1:23:02 AM [vite] page reload src/main.tsx
+1:23:10 AM [vite] page reload src/lib/wagmi.ts
+1:23:50 AM [vite] page reload src/main.tsx
+1:23:51 AM [vite] page reload src/lib/wagmi.ts
+1:23:57 AM [vite] page reload src/lib/wagmi.ts
+1:24:10 AM [vite] page reload src/lib/reown.ts
+1:24:13 AM [vite] page reload src/vite-env.d.ts
+1:24:17 AM [vite] page reload src/types/pwa.d.ts
+1:24:21 AM [vite] page reload src/lib/reown.ts
+1:28:07 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx, /src/pages/GameHistory.tsx
+1:35:26 AM [vite] hmr update /src/styles/index.css, /src/pages/GameHistory.tsx
+1:36:10 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+1:36:26 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+1:37:26 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+1:37:26 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+1:37:26 AM [vite] hmr update /src/styles/index.css, /src/pages/GameHistory.tsx
+1:37:26 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+1:37:26 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+1:37:26 AM [vite] hmr update /src/styles/index.css, /src/pages/GameHistory.tsx
+1:37:27 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+1:37:27 AM [vite] hmr update /src/styles/index.css, /src/pages/GameHistory.tsx
+1:37:27 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+1:37:27 AM [vite] hmr update /src/styles/index.css, /src/pages/GameHistory.tsx
+1:37:27 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+1:37:27 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+1:37:27 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+1:37:27 AM [vite] hmr update /src/styles/index.css, /src/pages/GameHistory.tsx
+1:37:27 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+1:37:36 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+1:37:36 AM [vite] hmr update /src/styles/index.css, /src/pages/GameHistory.tsx
+2:04:31 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+2:04:41 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+2:06:09 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:06:23 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:14:13 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+2:14:13 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx
+2:14:13 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:19:13 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx, /src/pages/GameHistory.tsx
+2:20:33 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:22:49 AM [vite] hmr update /src/styles/index.css, /src/pages/DiceGame.tsx, /src/components/game/GameBoard.tsx, /src/components/game/BalanceCard.tsx, /src/pages/GameHistory.tsx
+2:24:58 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:25:12 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:25:13 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:25:50 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:26:12 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:26:27 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:26:44 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:27:37 AM [vite] hmr update /src/styles/index.css
+2:27:51 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:28:07 AM [vite] hmr update /src/styles/index.css
+2:28:07 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:30:20 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:30:44 AM [vite] hmr update /src/styles/index.css
+2:31:04 AM [vite] hmr update /src/styles/index.css
+2:31:04 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:31:14 AM [vite] hmr update /src/components/game/GameBoard.tsx, /src/styles/index.css
+2:31:17 AM [vite] hmr update /src/styles/index.css
+2:32:36 AM [vite] hmr update /src/styles/index.css
+2:32:57 AM [vite] hmr update /src/styles/index.css

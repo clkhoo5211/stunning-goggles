@@ -1,0 +1,39 @@
+.withdraw-modal {
+  @apply space-y-4;
+}
+
+.withdraw-modal__description {
+  @apply text-sm text-slate-400;
+}
+
+.withdraw-modal__meta {
+  @apply flex items-center justify-between text-xs text-slate-500;
+}
+
+.withdraw-modal__meta-label {
+  @apply text-xs text-slate-500;
+}
+
+.withdraw-modal__field {
+  @apply space-y-2;
+}
+
+.withdraw-modal__label {
+  @apply text-xs uppercase tracking-wide text-slate-400;
+}
+
+.withdraw-modal__input {
+  display: block;
+}
+
+.withdraw-modal__helper {
+  @apply text-xs text-slate-400;
+}
+
+.withdraw-modal__actions {
+  @apply flex flex-col-reverse gap-3 sm:flex-row sm:justify-end;
+}
+
+.withdraw-modal__loading {
+  @apply flex items-center gap-2;
+}

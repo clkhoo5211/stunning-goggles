@@ -1,0 +1,124 @@
+.balance-card {
+  @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-2xl space-y-6;
+}
+
+.balance-card__header {
+  @apply flex items-center justify-between;
+}
+
+.balance-card__title {
+  @apply text-xl font-bold text-white;
+}
+
+.balance-card__refresh {
+  @apply text-sm text-blue-400 hover:text-blue-300 transition-colors;
+}
+
+.balance-card__summary {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-4;
+}
+
+.balance-card__summary-item {
+  @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 space-y-2;
+}
+
+.balance-card__summary-label {
+  @apply text-sm text-slate-400 uppercase tracking-wide;
+}
+
+.balance-card__summary-value {
+  @apply text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  max-width: 100%;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+.balance-card__summary-value--compact {
+  @apply text-2xl;
+}
+.balance-card__summary-value--dense {
+  @apply text-lg;
+}
+
+.balance-card__summary-unit {
+  margin-left: 0.5rem;
+  font-size: 0.75rem; /* text-xs */
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f8fafc;
+  background: none;
+  -webkit-text-fill-color: #f8fafc;
+  -webkit-background-clip: initial;
+}
+
+.balance-card__summary-sub {
+  @apply text-xs text-slate-500;
+}
+
+.balance-card__breakdown {
+  @apply grid grid-cols-2 gap-4;
+}
+
+.balance-card__breakdown-card {
+  @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 space-y-1;
+}
+
+.balance-card__breakdown-head {
+  @apply flex items-center gap-2 mb-1;
+}
+
+.balance-card__breakdown-icon {
+  @apply w-4 h-4;
+}
+
+.balance-card__breakdown-label {
+  @apply text-xs text-slate-400;
+}
+
+.balance-card__breakdown-value {
+  @apply text-xl font-bold text-white inline-flex items-baseline gap-1;
+}
+.balance-card__breakdown-value--compact {
+  @apply text-lg;
+}
+.balance-card__breakdown-value--dense {
+  @apply text-base;
+}
+
+.balance-card__breakdown-unit {
+  margin-left: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f8fafc;
+  -webkit-text-fill-color: #f8fafc;
+  -webkit-background-clip: initial;
+}
+
+.balance-card__stats {
+  @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4 grid grid-cols-2 gap-4 text-sm;
+}
+
+.balance-card__stats-label {
+  @apply block text-slate-400 mb-1;
+}
+
+.balance-card__stats-value {
+  @apply text-xl font-bold text-white;
+}
+
+.balance-card__actions {
+  @apply grid grid-cols-2 gap-3;
+}
+
+.balance-card__action-secondary {
+  @apply bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95;
+}
+
+.balance-card__action-primary {
+  @apply bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed;
+}

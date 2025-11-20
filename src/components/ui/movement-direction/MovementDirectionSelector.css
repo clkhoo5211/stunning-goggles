@@ -1,0 +1,105 @@
+.movement-selector {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: block;
+}
+
+.movement-selector__button {
+  position: absolute;
+  /* 统一的L形箭头尺寸 (120x120 viewBox) */
+  width: clamp(100px, 8vw, 140px);
+  height: clamp(100px, 8vw, 140px);
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: filter 0.3s ease, opacity 0.3s ease;
+  opacity: 0.55;
+}
+
+.movement-selector__button svg {
+  width: 100%;
+  height: 100%;
+}
+
+.movement-selector__button svg,
+.movement-selector__button svg * {
+  pointer-events: none;
+}
+
+.movement-selector__path {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.5;
+  transition: opacity 0.3s ease, stroke-width 0.3s ease, filter 0.3s ease;
+}
+
+.movement-selector__head {
+  opacity: 0.7;
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+.movement-selector__button--active .movement-selector__path {
+  opacity: 1;
+  stroke-width: 10;
+  filter: drop-shadow(0 0 12px rgba(124, 172, 255, 0.4));
+}
+
+.movement-selector__button--active .movement-selector__head {
+  opacity: 1;
+  filter: drop-shadow(0 0 8px rgba(124, 172, 255, 0.3));
+}
+
+.movement-selector__button--active {
+  opacity: 1;
+  filter: brightness(1.1);
+}
+
+/* 统一的L形箭头位置 - 位于dice board的四个90度角 */
+.movement-selector__button:hover:not(.movement-selector__button--disabled) {
+  filter: brightness(1.05);
+}
+
+.movement-selector__button:hover:not(.movement-selector__button--disabled) .movement-selector__path {
+  opacity: 0.8;
+}
+
+.movement-selector__button:hover:not(.movement-selector__button--disabled) .movement-selector__head {
+  opacity: 0.8;
+}
+
+.movement-selector__button--disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+  filter: grayscale(100%);
+}
+
+.movement-selector--inline {
+  position: static;
+  inset: auto;
+  pointer-events: auto;
+  display: inline-flex;
+}
+
+.movement-selector--inline .movement-selector__button {
+  position: static;
+  margin: 0 0.5rem;
+}
+
+.movement-selector__button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.5);
+  border-radius: 50%;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .movement-selector__button {
+    width: clamp(70px, 13vw, 100px);
+    height: clamp(70px, 13vw, 100px);
+  }
+}

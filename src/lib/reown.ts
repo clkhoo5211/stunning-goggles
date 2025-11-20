@@ -1,0 +1,93 @@
+import { createAppKit } from '@reown/appkit/react';
+import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
+import {
+  defineChain,
+  type AppKitNetwork,
+  mainnet,
+  polygon,
+  arbitrum,
+  base,
+  optimism,
+  bsc,
+  avalanche,
+} from '@reown/appkit/networks';
+
+// Reown (WalletConnect) Project ID
+export const projectId = import.meta.env.VITE_REOWN_PROJECT_ID || '1478687c5ec68d46a47d17c941950005';
+
+export const hardhatLocal = defineChain({
+  id: 31337,
+  caipNetworkId: 'eip155:31337',
+  chainNamespace: 'eip155',
+  name: 'Hardhat Local',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Ether',
+    symbol: 'ETH',
+  },
+  rpcUrls: {
+    default: { http: ['http://127.0.0.1:8545'] },
+    public: { http: ['http://127.0.0.1:8545'] },
+  },
+  blockExplorers: {
+    default: { name: 'Hardhat RPC', url: 'http://127.0.0.1:8545' },
+  },
+});
+
+export const networks: [AppKitNetwork, ...AppKitNetwork[]] = [
+  hardhatLocal,
+  mainnet,
+  polygon,
+  arbitrum,
+  base,
+  optimism,
+  bsc,
+  avalanche,
+];
+
+export const wagmiAdapter = new WagmiAdapter({
+  projectId,
+  networks,
+  ssr: false,
+});
+
+export const wagmiConfig = wagmiAdapter.wagmiConfig;
+
+const themeVariables: Record<string, string> = {
+  '--w3m-accent': '#38bdf8',
+  '--w3m-accent-fill-color': '#0f172a',
+  '--w3m-background-color': '#020617',
+  '--w3m-color-mix': '#22d3ee',
+  '--w3m-color-mix-strength': '20',
+  '--w3m-border-radius-master': '18',
+  '--w3m-font-family': '"Inter", "Space Grotesk", sans-serif',
+  '--w3m-text-big-bold-size': '18px',
+  '--w3m-button-border-radius': '14px',
+  '--w3m-success-color': '#34d399',
+};
+
+export const appKit = createAppKit({
+  adapters: [wagmiAdapter],
+  networks,
+  projectId,
+  metadata: {
+    name: 'LuckChain',
+    description: 'Provably Fair Blockchain Gaming Platform',
+    url: 'https://luckchain.io',
+    icons: ['data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg=='],
+  },
+  features: {
+    analytics: false,
+    connectMethodsOrder: ['social', 'email', 'wallet'],
+    legalCheckbox: true,
+  },
+  themeMode: 'dark',
+  themeVariables,
+  allowUnsupportedChain: true,
+  enableMobileFullScreen: true,
+  termsConditionsUrl: 'https://www.mytermsandconditions.com',
+  privacyPolicyUrl: 'https://www.myprivacypolicy.com',
+  allWallets: 'ONLY_MOBILE',
+  enableCoinbase: false,
+});
+

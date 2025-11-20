@@ -1,0 +1,25 @@
+{
+  "network": "localhost",
+  "chainId": 31337,
+  "timestamp": "2025-11-20T04:57:10.052Z",
+  "contracts": {
+    "MockUSDT": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    "GameBoard": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+    "DiceEngine": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+    "PrizePool": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+    "GameController": "0x4A679253410272dd5232B3Ff7cF5dbB88f295319",
+    "PlayerRegistry": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
+    "PlayerStorage": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+    "GameActivityLogger": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+    "GameConfigModule": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
+    "TokenRegistry": "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE",
+    "GovernanceToken": "0x998abeb3E57409262aE5b751f60747921B33613E",
+    "LuckTimelock": "0x0E801D84Fa97b50751Dbf25036d067dCf18858bF",
+    "LuckGovernor": "0x9d4454B023096f34B160D6B654540c56A1F81688",
+    "CalldataExecutor": "0x36C02dA8a0983159322a80FFE9F24b1acfF8B570"
+  },
+  "config": {
+    "costPerRound": "100000000",
+    "initialPoolBalance": "0"
+  }
+}

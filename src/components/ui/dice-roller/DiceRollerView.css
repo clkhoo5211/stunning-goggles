@@ -1,0 +1,86 @@
+.dice-roller-card {
+  @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-2xl overflow-visible;
+}
+
+.dice-roller-card__header {
+  @apply flex items-center justify-between gap-4;
+}
+
+.dice-roller-card__eyebrow {
+  @apply text-xs uppercase tracking-[0.3rem] text-slate-400 mb-1;
+}
+
+.dice-roller-card__title {
+  @apply text-3xl font-semibold text-white;
+}
+
+.dice-roller-card__subtitle {
+  @apply text-sm text-slate-400;
+}
+
+.dice-roller-card__badge {
+  @apply px-3 py-1 rounded-full bg-blue-500/10 border border-blue-400/40 text-xs font-semibold text-blue-200;
+}
+
+.dice-roller-card__badge-label {
+  @apply uppercase tracking-wide;
+}
+
+.dice-roller-card__faces {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(1.4rem, 4vw, 3rem);
+  padding: clamp(0.9rem, 2.5vw, 1.9rem) 0;
+  width: min(880px, 100%);
+  margin: 0 auto;
+  flex-wrap: wrap;
+}
+
+.dice-roller-card__slot {
+  width: clamp(4.8rem, 7.2vw, 6.6rem);
+  height: clamp(4.8rem, 7.2vw, 6.6rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dice-roller-card__stats {
+  @apply flex items-center justify-between rounded-xl bg-white/5 border border-white/10 px-6 py-4;
+}
+
+.dice-roller-card__stats-label {
+  @apply text-xs uppercase tracking-wider text-slate-400;
+}
+
+.dice-roller-card__stats-value {
+  @apply text-3xl font-semibold text-white;
+}
+
+.dice-roller-card__stats-meta {
+  @apply text-base text-slate-300;
+}
+
+.dice-roller-card__divider {
+  @apply h-10 w-px bg-white/10;
+}
+
+.dice-roller-card__baozi {
+  @apply mt-6 px-4 py-3 rounded-xl bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-400/40 text-yellow-200 font-semibold text-center;
+}
+
+.dice-roller-card__button {
+  @apply w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95;
+}
+
+.dice-roller-card__button--disabled {
+  @apply opacity-60 cursor-not-allowed;
+}
+
+.dice-roller-card__loading {
+  @apply flex items-center justify-center gap-2;
+}
+
+.dice-roller-card__spinner {
+  @apply w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin;
+}
