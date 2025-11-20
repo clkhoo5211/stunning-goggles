@@ -15,11 +15,11 @@ vi.mock('@lib/reown', () => ({
 }));
 
 // --- Shared mutable mock state to simulate on-chain player state ---
-const mockPlayRound = vi.fn<[], Promise<void>>();
-const mockBuyRounds = vi.fn<[], Promise<void>>();
-const mockClaimPendingReward = vi.fn<[], Promise<void>>();
-const mockForfeitPendingReward = vi.fn<[], Promise<void>>();
-const mockRefetchPlayerState = vi.fn<[], Promise<void>>();
+const mockPlayRound = vi.fn();
+const mockBuyRounds = vi.fn();
+const mockClaimPendingReward = vi.fn();
+const mockForfeitPendingReward = vi.fn();
+const mockRefetchPlayerState = vi.fn();
 
 let mockPlayerState: any;
 let mockDecisionState: any;
@@ -28,11 +28,11 @@ vi.mock('@hooks/useGameContract', () => ({
   useGameContract: () => ({
     playerState: mockPlayerState,
     decisionState: mockDecisionState,
-    playRound: (...args: any[]) => mockPlayRound(...args),
-    buyRounds: (...args: any[]) => mockBuyRounds(...args),
-    claimPendingReward: (...args: any[]) => mockClaimPendingReward(...args),
-    forfeitPendingReward: (...args: any[]) => mockForfeitPendingReward(...args),
-    refetchPlayerState: () => mockRefetchPlayerState(),
+    playRound: mockPlayRound,
+    buyRounds: mockBuyRounds,
+    claimPendingReward: mockClaimPendingReward,
+    forfeitPendingReward: mockForfeitPendingReward,
+    refetchPlayerState: mockRefetchPlayerState,
     roundsPerPackage: 10,
     costPerRound: '100000000', // 0.1 USDT in smallest units for display
   }),
