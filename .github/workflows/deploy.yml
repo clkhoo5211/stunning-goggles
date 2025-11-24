@@ -32,7 +32,7 @@ jobs:
       
       - name: Install dependencies
         run: |
-          npm install --frozen-lockfile
+          npm install
           # Ensure rollup optional dependencies are installed
           npm install @rollup/rollup-linux-x64-gnu --save-optional || npm install @rollup/rollup-linux-x64-gnu --no-save
       
