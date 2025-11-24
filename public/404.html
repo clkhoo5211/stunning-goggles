@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LuckChain - Provably Fair Blockchain Gaming</title>
+    <script>
+        // GitHub Pages 404.html redirect fix for client-side routing
+        // This ensures all routes are handled by React Router
+        
+        // Get the current pathname and preserve query/hash
+        const path = window.location.pathname;
+        const search = window.location.search;
+        const hash = window.location.hash;
+        const base = '/stunning-goggles/';
+        
+        // Extract the route path (remove base if present)
+        let routePath = path;
+        if (path.startsWith(base)) {
+            routePath = path.slice(base.length - 1); // Keep the leading slash
+        } else if (path !== '/' && !path.startsWith('/stunning-goggles')) {
+            routePath = path;
+        } else {
+            routePath = '/';
+        }
+        
+        // Redirect to index.html with the route path preserved
+        // React Router will handle the routing once index.html loads
+        const redirectUrl = base + 'index.html' + routePath + search + hash;
+        window.location.replace(redirectUrl);
+    </script>
+</head>
+<body>
+    <noscript>
+        <meta http-equiv="refresh" content="0; url=/stunning-goggles/">
+    </noscript>
+    <p>Redirecting...</p>
+</body>
+</html>
+
