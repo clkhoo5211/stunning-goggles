@@ -3,32 +3,43 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAccount, useBalance, useChainId, useSwitchChain } from 'wagmi';
 import { formatEther } from 'viem';
 import { appKit, hardhatLocal } from '@lib/reown';
+import { getTargetChainId, getNetworkName } from '@lib/contracts/getNetworkConfig';
 import { Wallet, Home, Gamepad2, History, Trophy, Shield, User, Droplet, Store, Image, Banknote } from 'lucide-react';
 
 export function Header() {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
+  const targetChainId = getTargetChainId();
+  const networkName = getNetworkName();
   
-  // Automatically switch to Hardhat local network when connected
+  // Automatically switch to target network when connected
   useEffect(() => {
-    if (isConnected && chainId !== hardhatLocal.id && switchChain) {
-      console.log('[Header] Current chainId:', chainId, 'Target:', hardhatLocal.id);
+    if (isConnected && chainId !== targetChainId && switchChain) {
+      console.log('[Header] Current chainId:', chainId, 'Target:', targetChainId, `(${networkName})`);
       // Use setTimeout to avoid race conditions with wallet connection
       const timeoutId = setTimeout(async () => {
         try {
-          console.log('[Header] Attempting to switch to Hardhat Local network...');
-          await switchChain({ chainId: hardhatLocal.id });
-          console.log('[Header] Successfully switched to Hardhat Local network');
+          console.log(`[Header] Attempting to switch to ${networkName} network...`);
+          await switchChain({ chainId: targetChainId });
+          console.log(`[Header] Successfully switched to ${networkName} network`);
         } catch (error: any) {
           console.error('[Header] Failed to switch network:', error);
           // Error code 4902 = Chain not configured in wallet
           if (error?.code === 4902) {
-            console.warn('[Header] Hardhat Local network not found in wallet. Please add it manually in MetaMask:');
-            console.warn('  Network Name: Hardhat Local');
-            console.warn('  RPC URL: http://127.0.0.1:8545');
-            console.warn('  Chain ID: 31337');
-            console.warn('  Currency Symbol: ETH');
+            if (targetChainId === 11155111) {
+              console.warn('[Header] Sepolia network not found in wallet. Please add it manually in MetaMask:');
+              console.warn('  Network Name: Sepolia');
+              console.warn('  RPC URL: https://sepolia.infura.io/v3/de53b5bc8ea1410c8f9cde007ecdfa90');
+              console.warn('  Chain ID: 11155111');
+              console.warn('  Currency Symbol: ETH');
+            } else {
+              console.warn('[Header] Hardhat Local network not found in wallet. Please add it manually in MetaMask:');
+              console.warn('  Network Name: Hardhat Local');
+              console.warn('  RPC URL: http://127.0.0.1:8545');
+              console.warn('  Chain ID: 31337');
+              console.warn('  Currency Symbol: ETH');
+            }
           } else if (error?.code === 4001) {
             console.warn('[Header] User rejected network switch');
           } else {
@@ -38,16 +49,16 @@ export function Header() {
       }, 1000); // Increased delay to ensure wallet is ready
       
       return () => clearTimeout(timeoutId);
-    } else if (isConnected && chainId === hardhatLocal.id) {
-      console.log('[Header] Already on Hardhat Local network');
+    } else if (isConnected && chainId === targetChainId) {
+      console.log(`[Header] Already on ${networkName} network`);
     }
-  }, [isConnected, chainId, switchChain]);
+  }, [isConnected, chainId, switchChain, targetChainId, networkName]);
   
   const { data: balance, isLoading: isBalanceLoading, error: balanceError } = useBalance({
     address: address,
-    chainId: hardhatLocal.id, // Explicitly use Hardhat Local chain
+    chainId: targetChainId, // Use target chain from addresses.json
     query: {
-      enabled: !!address && isConnected && chainId === hardhatLocal.id, // Only fetch if on correct network
+      enabled: !!address && isConnected && chainId === targetChainId, // Only fetch if on correct network
       refetchInterval: 5000, // Refetch every 5 seconds
     },
   });
@@ -57,14 +68,15 @@ export function Header() {
     if (isConnected && address) {
       console.log('[Header] Balance Debug:', {
         chainId,
-        targetChainId: hardhatLocal.id,
-        isOnCorrectNetwork: chainId === hardhatLocal.id,
+        targetChainId,
+        networkName,
+        isOnCorrectNetwork: chainId === targetChainId,
         balance: balance ? formatEther(balance.value) : null,
         isLoading: isBalanceLoading,
         error: balanceError,
       });
     }
-  }, [isConnected, address, chainId, balance, isBalanceLoading, balanceError]);
+  }, [isConnected, address, chainId, targetChainId, networkName, balance, isBalanceLoading, balanceError]);
   const location = useLocation();
   const navContainerRef = useRef<HTMLDivElement>(null);
   const navItemRefs = useRef<{ [key: string]: HTMLAnchorElement | null }>({});
@@ -215,10 +227,10 @@ export function Header() {
                       {parseFloat(formatEther(balance.value)).toFixed(4)} ETH
                     </span>
                   )}
-                  {chainId === hardhatLocal.id && isBalanceLoading && (
+                  {chainId === targetChainId && isBalanceLoading && (
                     <span className="hidden sm:inline text-[10px] text-slate-500 leading-tight">Loading...</span>
                   )}
-                  {chainId !== hardhatLocal.id && (
+                  {chainId !== targetChainId && (
                     <span className="hidden sm:inline text-[10px] text-yellow-400 leading-tight">
                       ⚠️ Wrong Network
                     </span>

@@ -4,6 +4,7 @@ import {
   defineChain,
   type AppKitNetwork,
   mainnet,
+  sepolia,
   polygon,
   arbitrum,
   base,
@@ -34,8 +35,12 @@ export const hardhatLocal = defineChain({
   },
 });
 
+// Export sepolia for use in components
+export { sepolia };
+
 export const networks: [AppKitNetwork, ...AppKitNetwork[]] = [
   hardhatLocal,
+  sepolia,
   mainnet,
   polygon,
   arbitrum,
