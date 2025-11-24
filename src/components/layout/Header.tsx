@@ -2,7 +2,7 @@ import { useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAccount, useBalance, useChainId, useSwitchChain } from 'wagmi';
 import { formatEther } from 'viem';
-import { appKit, hardhatLocal } from '@lib/reown';
+import { appKit } from '@lib/reown';
 import { getTargetChainId, getNetworkName } from '@lib/contracts/getNetworkConfig';
 import { Wallet, Home, Gamepad2, History, Trophy, Shield, User, Droplet, Store, Image, Banknote } from 'lucide-react';
 
@@ -222,7 +222,7 @@ export function Header() {
                 <div className="flex flex-col items-start">
                   <span className="hidden sm:inline font-mono text-green-300 leading-tight">{formatAddress(address)}</span>
                   <span className="sm:hidden font-mono text-green-300 text-xs leading-tight">{address.slice(0, 4)}...</span>
-                  {chainId === hardhatLocal.id && balance && (
+                  {chainId === targetChainId && balance && (
                     <span className="hidden sm:inline text-[10px] text-slate-400 leading-tight">
                       {parseFloat(formatEther(balance.value)).toFixed(4)} ETH
                     </span>

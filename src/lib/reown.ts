@@ -12,6 +12,7 @@ import {
   bsc,
   avalanche,
 } from '@reown/appkit/networks';
+import { getTargetChainId } from './contracts/getNetworkConfig';
 
 // Reown (WalletConnect) Project ID
 export const projectId = import.meta.env.VITE_REOWN_PROJECT_ID || '1478687c5ec68d46a47d17c941950005';
@@ -38,9 +39,14 @@ export const hardhatLocal = defineChain({
 // Export sepolia for use in components
 export { sepolia };
 
+// Dynamically determine the default network based on addresses.json
+const targetChainId = getTargetChainId();
+const defaultNetwork = targetChainId === 11155111 ? sepolia : hardhatLocal;
+
+// Put the default network first so Wagmi uses it as default
 export const networks: [AppKitNetwork, ...AppKitNetwork[]] = [
-  hardhatLocal,
-  sepolia,
+  defaultNetwork,
+  ...(targetChainId === 11155111 ? [hardhatLocal] : [sepolia]),
   mainnet,
   polygon,
   arbitrum,
