@@ -14,19 +14,34 @@
         const hash = window.location.hash;
         const base = '/stunning-goggles/';
         
-        // Extract the route path (remove base if present)
+        // Extract the route path (remove base if present, but keep the route)
         let routePath = path;
-        if (path.startsWith(base)) {
-            routePath = path.slice(base.length - 1); // Keep the leading slash
-        } else if (path !== '/' && !path.startsWith('/stunning-goggles')) {
-            routePath = path;
-        } else {
+        
+        // Remove /index.html if present in the path
+        if (path.includes('/index.html')) {
+            routePath = path.replace('/index.html', '');
+        }
+        
+        // Handle base path extraction
+        if (routePath.startsWith(base)) {
+            // Remove the base path, keep the route
+            routePath = routePath.slice(base.length - 1); // Keep leading slash for routes like /faucet
+        } else if (routePath.startsWith('/stunning-goggles')) {
+            // Handle case where path includes base but not exactly
+            routePath = routePath.replace('/stunning-goggles', '');
+            if (!routePath.startsWith('/')) routePath = '/' + routePath;
+        } else if (routePath === '/' || routePath === '') {
             routePath = '/';
         }
         
-        // Redirect to index.html with the route path preserved
-        // React Router will handle the routing once index.html loads
-        const redirectUrl = base + 'index.html' + routePath + search + hash;
+        // Ensure routePath starts with / if it's not empty
+        if (routePath && !routePath.startsWith('/')) {
+            routePath = '/' + routePath;
+        }
+        
+        // Redirect to base path with route preserved (without index.html in URL)
+        // React Router will handle the routing based on the pathname
+        const redirectUrl = base.slice(0, -1) + routePath + search + hash;
         window.location.replace(redirectUrl);
     </script>
 </head>
