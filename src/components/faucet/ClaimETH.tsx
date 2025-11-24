@@ -126,6 +126,7 @@ export function ClaimETH({ className = '', compact = false }: ClaimETHProps) {
           address: FAUCET_ADDRESS,
           abi: testnetFaucetAbi,
           functionName: 'claimETH',
+          gas: 200000n, // Set reasonable gas limit for ETH transfer (200k should be enough)
         }),
         {
           loading: 'Claiming ETH...',

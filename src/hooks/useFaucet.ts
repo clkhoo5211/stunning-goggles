@@ -139,6 +139,7 @@ export function useFaucet() {
         address: FAUCET_ADDRESS,
         abi: testnetFaucetAbi,
         functionName: 'claimMockUSDT',
+        gas: 500000n, // Set reasonable gas limit (500k should be more than enough for mint + transfer)
       });
       setLastSuccessfulClaim('USDT');
       return tx;
@@ -181,6 +182,7 @@ export function useFaucet() {
         address: FAUCET_ADDRESS,
         abi: testnetFaucetAbi,
         functionName: 'claimMockPlatformToken',
+        gas: 500000n, // Set reasonable gas limit (500k should be more than enough for mint + transfer)
       });
       setLastSuccessfulClaim('PLATFORM');
       return tx;
