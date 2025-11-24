@@ -4,7 +4,7 @@ import { formatUnits } from 'viem';
 import addresses from '@lib/contracts/addresses.json';
 import { activityLoggerAbi } from '@lib/contracts/abi/activityLogger';
 
-type ActionType = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+type ActionType = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
 const ACTION_LABELS: Record<ActionType, string> = {
   0: 'Deposit',
@@ -17,6 +17,14 @@ const ACTION_LABELS: Record<ActionType, string> = {
   7: 'Leopard Bonus',
   8: 'Penalty Refund',
   9: 'Claim Refund',
+  10: 'Pool Contribution',
+};
+
+export const POOL_CONTRIBUTION_SOURCES: Record<number, string> = {
+  0: 'Deposit Fee',
+  1: 'Withdraw Fee',
+  2: 'Buy Rounds',
+  3: 'Other',
 };
 
 export interface GameHistoryEntry {

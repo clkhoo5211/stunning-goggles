@@ -50,7 +50,7 @@ export function Modal({ isOpen, title, onClose, children, footer }: ModalProps) 
           />
 
           <motion.div
-            className="relative z-10 aspect-square w-[min(90vw,90vh)] h-[min(90vw,90vh)] max-w-[min(90vw,90vh)] max-h-[min(90vw,90vh)] flex flex-col"
+            className="relative z-10 w-full max-w-md sm:max-w-lg md:max-w-xl max-h-[90vh] flex flex-col"
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}

@@ -50,12 +50,23 @@
     "autoprefixer": "^10.4.0",
     "eslint": "^8.55.0",
     "eslint-config-prettier": "^9.1.0",
+    "jsdom": "^27.0.1",
     "postcss": "^8.4.0",
     "prettier": "^3.1.0",
+    "rollup": "^4.53.3",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.3.0",
     "vite": "^5.0.0",
     "vite-plugin-pwa": "^0.17.0",
     "vitest": "^1.0.0"
+  },
+  "optionalDependencies": {
+    "@jridgewell/resolve-uri": "^3.1.2",
+    "@jridgewell/sourcemap-codec": "^1.5.5",
+    "@rollup/rollup-darwin-arm64": "^4.53.2",
+    "fast-glob": "^3.3.3",
+    "normalize-path": "^3.0.0",
+    "picocolors": "^1.1.1",
+    "util-deprecate": "^1.0.2"
   }
 }

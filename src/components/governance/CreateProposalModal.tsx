@@ -37,8 +37,8 @@ export function CreateProposalModal({ isOpen, onClose, onCreateProposal }: Creat
   const [description, setDescription] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
-  // GameController is the default target for most governance actions
-  const gameControllerAddress = addresses.contracts.GameController as `0x${string}`;
+  // DiceGame is the default target for most governance actions (fallback to GameController for backward compatibility)
+  const gameControllerAddress = (addresses.contracts.DiceGame || addresses.contracts.GameController) as `0x${string}`;
 
   // Configuration action fields
   const [costPerRound, setCostPerRound] = useState('');

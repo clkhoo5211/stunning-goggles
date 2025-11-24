@@ -6,6 +6,11 @@ import GameHistory from '@pages/GameHistory';
 import Leaderboard from '@pages/Leaderboard';
 import Governance from '@pages/Governance';
 import Profile from '@pages/Profile';
+import Faucet from '@pages/Faucet';
+import Marketplace from '@pages/Marketplace';
+import MyNFTs from '@pages/MyNFTs';
+import NFTDetail from '@pages/NFTDetail';
+import Lending from '@pages/Lending';
 import { Header } from '@components/layout/Header';
 import { Footer } from '@components/layout/Footer';
 import { PWAInstallPrompt } from '@components/ui/PWAInstallPrompt';
@@ -27,6 +32,11 @@ function App() {
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/governance" element={<Governance />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/faucet" element={<Faucet />} />
+            <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/my-nfts" element={<MyNFTs />} />
+            <Route path="/nft/:tokenId" element={<NFTDetail />} />
+            <Route path="/lending" element={<Lending />} />
           </Routes>
         </main>
 

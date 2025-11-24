@@ -25,12 +25,14 @@ export function BalanceCard({ showCard = true }: BalanceCardProps) {
     depositTokenSymbol,
     depositTokenEnabled,
     refetchAllowance,
+    refetchDepositTokenBalance,
     withdrawNet,
     depositFeeBps,
     withdrawFeeBps,
     roundsPerPackage,
     costPerRound,
     minDepositAmount,
+    minWithdrawAmount,
     minWithdrawNet,
   } = useGameContract();
 
@@ -66,39 +68,6 @@ export function BalanceCard({ showCard = true }: BalanceCardProps) {
     setDepositAmount(normalized);
   };
 
-  const handleWithdrawAmountChange = (value: string) => {
-    const sanitized = value.replace(/[^0-9.]/g, '');
-    if (sanitized === '') {
-      setWithdrawAmount('');
-      return;
-    }
-
-    const segments = sanitized.split('.');
-    let whole = segments[0]?.replace(/^0+(?=\d)/, '') || '0';
-    let decimals = segments[1] ?? '';
-
-    if (segments.length > 2) {
-      decimals += segments.slice(2).join('');
-    }
-    if (decimals.length > 2) {
-      decimals = decimals.slice(0, 2);
-    }
-
-    const normalized = decimals.length > 0 ? `${whole}.${decimals}` : whole;
-    const numeric = Number.parseFloat(normalized);
-
-    if (Number.isNaN(numeric)) {
-      setWithdrawAmount('');
-      return;
-    }
-
-    if (numeric > maxWithdrawDisplay) {
-      setWithdrawAmount(maxWithdrawDisplay.toFixed(2));
-      return;
-    }
-
-    setWithdrawAmount(normalized);
-  };
 
   useEffect(() => {
     if (approvalCountdown <= 0) return;
@@ -125,28 +94,72 @@ export function BalanceCard({ showCard = true }: BalanceCardProps) {
   const isReady = isConnected && !!address;
 
   const depositBalance = playerState?.depositedBalance || '0';
-  const withdrawableBalance = playerState?.winningsBalance || '0';
+  const winningsBalance = playerState?.winningsBalance || '0';
+  // Withdrawable balance includes both winnings and deposits (for withdrawNet)
+  // These are already formatted strings, so add them as numbers
+  const withdrawableBalance = (parseFloat(winningsBalance || '0') + parseFloat(depositBalance || '0')).toString();
   const lifetimeDeposited = playerState?.totalDeposited || '0';
   const lifetimeWinnings = playerState?.lifetimeWinnings || '0';
+  
+  // Calculate max withdraw values (needed for handleWithdrawAmountChange and validation)
   const depositBalanceNumeric = useMemo(() => parseFloat(depositBalance || '0'), [depositBalance]);
+  const winningsBalanceNumeric = useMemo(() => parseFloat(winningsBalance || '0'), [winningsBalance]);
   const withdrawableNumeric = useMemo(
-    () => parseFloat(withdrawableBalance || '0'),
-    [withdrawableBalance]
+    () => depositBalanceNumeric + winningsBalanceNumeric,
+    [depositBalanceNumeric, winningsBalanceNumeric]
   );
   const withdrawFeeRate = (withdrawFeeBps ?? 0) / 10000;
   const safeFeeRate = withdrawFeeRate >= 1 ? 0 : withdrawFeeRate;
-  const winningsNetAvailable = Math.max(withdrawableNumeric * (1 - safeFeeRate), 0);
-  const depositNetAvailable = Math.max(depositBalanceNumeric * (1 - safeFeeRate), 0);
-  const totalNetAvailable = winningsNetAvailable + depositNetAvailable;
+  // Total net available = (deposited + winnings) * (1 - feeRate)
+  const totalNetAvailable = Math.max(withdrawableNumeric * (1 - safeFeeRate), 0);
+  const maxWithdrawDisplay = useMemo(
+    () => Math.max(Math.floor(totalNetAvailable * 100) / 100, 0),
+    [totalNetAvailable]
+  );
+  // Minimum withdrawal from contract (net amount user receives)
+  // This should be 1999 USDT, but we get it from the contract
   const minWithdraw = Math.max(parseFloat(minWithdrawNet || '0'), 0);
   const maxNetWithdraw = totalNetAvailable;
-  const maxWithdrawDisplay = useMemo(
-    () => Math.max(Math.floor(maxNetWithdraw * 100) / 100, 0),
-    [maxNetWithdraw]
-  );
   const maxGrossWithdraw = safeFeeRate < 1 ? maxNetWithdraw / (1 - safeFeeRate) : 0;
   const withdrawDisabled =
     totalNetAvailable < minWithdraw || minWithdraw === 0 || maxGrossWithdraw < minWithdraw;
+
+  // Handle withdraw amount change with auto-adjustment to maximum
+  const handleWithdrawAmountChange = (value: string) => {
+    const sanitized = value.replace(/[^0-9.]/g, '');
+    if (sanitized === '') {
+      setWithdrawAmount('');
+      return;
+    }
+
+    const segments = sanitized.split('.');
+    let whole = segments[0]?.replace(/^0+(?=\d)/, '') || '0';
+    let decimals = segments[1] ?? '';
+
+    if (segments.length > 2) {
+      decimals += segments.slice(2).join('');
+    }
+    if (decimals.length > 2) {
+      decimals = decimals.slice(0, 2);
+    }
+
+    const normalized = decimals.length > 0 ? `${whole}.${decimals}` : whole;
+    const numeric = Number.parseFloat(normalized);
+
+    if (Number.isNaN(numeric)) {
+      setWithdrawAmount('');
+      return;
+    }
+
+    // Auto-adjust to maximum if user enters value higher than maximum
+    if (numeric > maxWithdrawDisplay) {
+      setWithdrawAmount(maxWithdrawDisplay.toFixed(2));
+      return;
+    }
+
+    setWithdrawAmount(normalized);
+  };
+
   const numericDepositAmount = Number(depositAmount || '0');
   const tokenSymbol = depositTokenSymbol || 'USDT';
   const needsApproval = parseFloat(depositTokenAllowance) + 1e-6 < numericDepositAmount;
@@ -235,6 +248,7 @@ export function BalanceCard({ showCard = true }: BalanceCardProps) {
       await Promise.all([
         refetchPlayerState?.(),
         refetchAllowance?.(),
+        refetchDepositTokenBalance?.(),
       ]);
     } catch (error: any) {
       console.error('Deposit error:', error);
@@ -252,14 +266,30 @@ export function BalanceCard({ showCard = true }: BalanceCardProps) {
       return;
     }
 
+    // User inputs NET amount (what they want to receive)
+    // Minimum input must match contract's minWithdrawNet
     if (numericAmount < minWithdraw) {
       toast.error(`Minimum withdrawal is ${minWithdraw.toFixed(0)} ${tokenSymbol}.`);
       return;
     }
 
-    const allowedAmount = Math.min(maxWithdrawDisplay, maxNetWithdraw);
-    if (numericAmount - allowedAmount > 0.0001) {
-      toast.error('Amount exceeds available withdrawable balance.');
+    // Calculate gross required from net amount (including fee)
+    // grossRequired = netAmount / (1 - feeRate)
+    // For 1999 USDT net with 0.5% fee: grossRequired = 1999 / 0.995 = 2008.995 USDT
+    const totalGrossBalance = withdrawableNumeric; // Already includes deposits + winnings
+    const grossRequired = safeFeeRate < 1 ? numericAmount / (1 - safeFeeRate) : numericAmount;
+    
+    // Validation: User's total balance (deposited + winnings) must be >= gross required
+    // Calculate minimum gross required based on contract's minWithdrawNet and fee
+    const minWithdrawGross = safeFeeRate < 1 ? minWithdraw / (1 - safeFeeRate) : minWithdraw;
+    if (grossRequired < minWithdrawGross) {
+      toast.error(`Withdrawal amount (including fee) must be at least ${minWithdrawGross.toFixed(2)} ${tokenSymbol} to receive ${minWithdraw.toFixed(0)} ${tokenSymbol}.`);
+      return;
+    }
+    
+    if (totalGrossBalance < grossRequired) {
+      const shortfall = grossRequired - totalGrossBalance;
+      toast.error(`Insufficient balance. You need ${shortfall.toFixed(2)} more ${tokenSymbol} (including ${(grossRequired - numericAmount).toFixed(2)} ${tokenSymbol} fee).`);
       return;
     }
 
@@ -270,6 +300,8 @@ export function BalanceCard({ showCard = true }: BalanceCardProps) {
       playSound('withdraw');
       toast.success('Withdrawal successful!', { id: withdrawToast });
       setIsWithdrawOpen(false);
+      // Reset withdraw amount to minimum or 0 after successful withdrawal
+      setWithdrawAmount(minWithdraw > 0 ? minWithdraw.toFixed(2) : '0');
       await refetchPlayerState?.();
     } catch (error: any) {
       console.error('Withdraw error:', error);
@@ -359,6 +391,8 @@ export function BalanceCard({ showCard = true }: BalanceCardProps) {
         onClose={() => {
           if (isProcessing) return;
           setIsWithdrawOpen(false);
+          // Reset withdraw amount when modal is closed
+          setWithdrawAmount(minWithdraw > 0 ? minWithdraw.toFixed(2) : '0');
         }}
         feeBps={withdrawFeeBps ?? 0}
         onConfirm={handleWithdraw}

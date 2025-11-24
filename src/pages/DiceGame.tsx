@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAccount } from 'wagmi';
 import { motion } from 'framer-motion';
-import { Loader2, Timer, Volume2, VolumeX } from 'lucide-react';
+import { Loader2, Volume2, VolumeX } from 'lucide-react';
 import { toast } from 'sonner';
 import { prettyRpcError } from '@utils/prettyRpcError';
 import { GameBoard } from '@components/game/GameBoard';
@@ -14,7 +14,7 @@ import { HowToPlayModal } from '@components/game/HowToPlayModal';
 import { AnimatedNumber } from '@components/ui/animated-number';
 import { GameActionBar } from '@components/game/GameActionBar';
 import { BalanceCard } from '@components/game/BalanceCard';
-const MIN_DISPLAY_PRECISION = 2;
+// const MIN_DISPLAY_PRECISION = 2; // Temporarily commented out with pending reward section
 
 const generateRandomDiceFaces = () =>
   Array.from({ length: 5 }, () => Math.floor(Math.random() * 6) + 1);
@@ -96,7 +96,7 @@ const DiceGame: React.FC = () => {
   // Play win/jackpot sounds when pending reward becomes active
   useEffect(() => {
     if (hasPendingReward) {
-      const isJackpot = playerState?.lastDiceValues?.every((v) => v === playerState.lastDiceValues[0]);
+      const isJackpot = playerState?.lastDiceValues?.every((v: number) => v === playerState.lastDiceValues[0]);
       if (isJackpot) {
         playSound('jackpot');
       } else {
@@ -116,7 +116,7 @@ const DiceGame: React.FC = () => {
       return;
     }
 
-    const hasRecordedRoll = playerState.hasRecordedRoll && playerState.lastDiceValues.some((face) => face > 0);
+    const hasRecordedRoll = playerState.hasRecordedRoll && playerState.lastDiceValues.some((face: number) => face > 0);
     if (!hasRecordedRoll) {
       return;
     }
@@ -124,7 +124,7 @@ const DiceGame: React.FC = () => {
     const nextDiceValues = playerState.lastDiceValues;
     const diceChanged =
       nextDiceValues.length !== lastDiceValues.length ||
-      nextDiceValues.some((value, index) => value !== lastDiceValues[index]);
+      nextDiceValues.some((value: number, index: number) => value !== lastDiceValues[index]);
 
     if (diceChanged) {
       setLastDiceValues(nextDiceValues);
@@ -219,7 +219,7 @@ const DiceGame: React.FC = () => {
       const toastId = toast.loading(
         `Purchasing new ${sessionRounds}-round session (${sessionCost.toLocaleString()} USDT)...`
       );
-      await buyRounds(sessionRounds, 0);
+      await buyRounds(sessionRounds);
       toast.success('Session purchased! Good luck 🍀', { id: toastId });
       setIsBuyModalOpen(false);
       await refetchPlayerState?.();
@@ -499,7 +499,8 @@ const DiceGame: React.FC = () => {
         />
       </div>
 
-      {hasPendingReward && (
+      {/* Temporarily commented out - Pending Reward section */}
+      {/* {hasPendingReward && (
         <div className="card p-6 border border-yellow-500/30 bg-yellow-500/5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
@@ -546,7 +547,7 @@ const DiceGame: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       <DiceRoller
         isRolling={isRolling}

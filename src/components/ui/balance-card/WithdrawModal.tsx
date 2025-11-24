@@ -25,7 +25,9 @@ export function WithdrawModal({
   feeBps,
   tokenSymbol,
 }: WithdrawModalProps) {
-  const feePercent = (feeBps / 100).toFixed(2).replace(/\.00$/, '');
+  // feeBps is in basis points (1/10000), so divide by 100 to get percentage
+  // e.g., 50 BPS = 0.5% = 50/100 = 0.5
+  const feePercent = feeBps > 0 ? (feeBps / 100).toFixed(2).replace(/\.00$/, '') : '0';
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Withdraw Funds">

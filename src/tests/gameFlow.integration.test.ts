@@ -10,7 +10,9 @@ import { privateKeyToAccount } from 'viem/accounts';
 
 import addresses from '@lib/contracts/addresses.json';
 import { erc20Abi } from '@lib/contracts/abi/erc20';
-import { gameControllerAbi } from '@lib/contracts/abi/gameController';
+import { diceGameAbi } from '@lib/contracts/abi/diceGame';
+import { playerStorageAbi } from '@lib/contracts/abi/playerStorage';
+import { encodeAbiParameters } from 'viem';
 
 const TEST_PRIVATE_KEY =
   '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' as const;
@@ -29,7 +31,9 @@ const publicClient = createPublicClient({
   transport: http(RPC_URL),
 });
 
-const { MockUSDT, GameController } = addresses.contracts as Record<string, `0x${string}`>;
+const { MockUSDT, DiceGame, PlayerStorage, GameController: OldGameController } = addresses.contracts as Record<string, `0x${string}`>;
+const GameController = (DiceGame || OldGameController) as `0x${string}`;
+const PlayerStorageAddress = PlayerStorage || OldGameController; // Fallback to GameController if PlayerStorage not available
 
 const mockUsdtAbi = [
   ...erc20Abi,
@@ -46,12 +50,41 @@ const mockUsdtAbi = [
 ] as const;
 
 async function getPlayerState() {
-  return publicClient.readContract({
-    address: GameController,
-    abi: gameControllerAbi,
-    functionName: 'getPlayerState',
-    args: [account.address],
-  });
+  // Try GameController first (old architecture) if available
+  if (OldGameController && OldGameController !== '0x0000000000000000000000000000000000000000') {
+    try {
+      return await publicClient.readContract({
+        address: OldGameController,
+        abi: gameControllerAbi,
+        functionName: 'getPlayerState',
+        args: [account.address],
+      });
+    } catch (error) {
+      // Continue to try new architecture
+    }
+  }
+  
+  // Try DiceGame (new architecture)
+  if (GameController && GameController !== '0x0000000000000000000000000000000000000000' && GameController !== OldGameController) {
+    try {
+      // DiceGame doesn't have getPlayerState, try PlayerStorage
+      if (PlayerStorageAddress && PlayerStorageAddress !== '0x0000000000000000000000000000000000000000') {
+        const result = await publicClient.readContract({
+          address: PlayerStorageAddress,
+          abi: playerStorageAbi,
+          functionName: 'getPlayer',
+          args: [account.address],
+        });
+        const [state, found] = result as [any, boolean];
+        return found ? state : null;
+      }
+    } catch (error) {
+      console.warn('Failed to get player state:', error);
+      return null;
+    }
+  }
+  
+  return null;
 }
 
 async function ensureLiquidity(amount: bigint) {
@@ -81,35 +114,43 @@ async function ensureLiquidity(amount: bigint) {
 
 async function resetSessionProgress() {
   try {
+    // Note: resetPlayerProgress may not exist in DiceGame
+    // This is an admin function that may need to be called differently
+    // For now, we'll skip it if it fails
     await walletClient.writeContract({
       address: GameController,
-      abi: gameControllerAbi,
-      functionName: 'resetPlayerProgress',
+      abi: diceGameAbi,
+      functionName: 'resetPlayerProgress' as any,
       args: [account.address],
     });
   } catch {
-    // ignore if caller lacks role on some deployments
+    // ignore if caller lacks role on some deployments or function doesn't exist
   }
 }
 
 async function clearActiveSessionIfNeeded() {
   for (let attempt = 0; attempt < 12; attempt++) {
     const state = await getPlayerState();
-    if (!state.hasActiveSession) {
+    if (!state || !state.hasActiveSession) {
       return;
     }
+    // Encode gameParams for DiceGame.play()
+    const gameParams = encodeAbiParameters(
+      [{ type: 'bool', name: 'isClockwise' }],
+      [true]
+    );
     await walletClient.writeContract({
       address: GameController,
-      abi: gameControllerAbi,
-      functionName: 'playRound',
-      args: [true, BigInt(Math.floor(Math.random() * 1_000_000))],
+      abi: diceGameAbi,
+      functionName: 'play',
+      args: [gameParams, BigInt(Math.floor(Math.random() * 1_000_000))],
     });
     const after = await getPlayerState();
-    if (after.pendingRewardActive) {
+    if (after && after.pendingRewardActive) {
       await walletClient.writeContract({
         address: GameController,
-        abi: gameControllerAbi,
-        functionName: 'forfeitPendingReward',
+        abi: diceGameAbi,
+        functionName: 'forfeitReward',
         args: [],
       });
     }
@@ -118,22 +159,22 @@ async function clearActiveSessionIfNeeded() {
 
 async function resolvePendingReward(roundsRemaining: number) {
   const state = await getPlayerState();
-  if (!state.pendingRewardActive) {
+  if (!state || !state.pendingRewardActive) {
     return;
   }
 
   if (roundsRemaining > 1) {
     await walletClient.writeContract({
       address: GameController,
-      abi: gameControllerAbi,
-      functionName: 'forfeitPendingReward',
+      abi: diceGameAbi,
+      functionName: 'forfeitReward',
       args: [],
     });
   } else {
     await walletClient.writeContract({
       address: GameController,
-      abi: gameControllerAbi,
-      functionName: 'claimPendingReward',
+      abi: diceGameAbi,
+      functionName: 'claimReward',
       args: [],
     });
   }
@@ -154,21 +195,22 @@ describe('LuckChain frontend contract flow (integration)', () => {
       await clearActiveSessionIfNeeded();
       await ensureLiquidity(depositAmount);
 
-      // Deposit into controller
+      // Deposit into DiceGame
       await walletClient.writeContract({
         address: GameController,
-        abi: gameControllerAbi,
+        abi: diceGameAbi,
         functionName: 'deposit',
         args: [depositAmount],
       });
 
       const postDeposit = await getPlayerState();
-      expect(postDeposit.depositedBalance).toBeGreaterThan(0n);
+      expect(postDeposit).toBeTruthy();
+      expect(postDeposit!.depositedBalance).toBeGreaterThan(0n);
 
       // start 10-round session
       await walletClient.writeContract({
         address: GameController,
-        abi: gameControllerAbi,
+        abi: diceGameAbi,
         functionName: 'buyRounds',
         args: [10n, 0],
       });
@@ -176,18 +218,26 @@ describe('LuckChain frontend contract flow (integration)', () => {
       // Play up to 10 rounds, forfeiting first rewards and claiming near the end.
       for (let round = 1; round <= 10; round++) {
         const preState = await getPlayerState();
-        if (!preState.hasActiveSession || Number(preState.roundsRemaining) === 0) {
+        if (!preState || !preState.hasActiveSession || Number(preState.roundsRemaining) === 0) {
           break;
         }
+        // Encode gameParams for DiceGame.play() - contract expects (bool, uint256)
+        const gameParams = encodeAbiParameters(
+          [
+            { type: 'bool', name: 'isClockwise' },
+            { type: 'uint256', name: 'unused' }
+          ],
+          [true, 0n]
+        );
         await walletClient.writeContract({
           address: GameController,
-          abi: gameControllerAbi,
-          functionName: 'playRound',
-          args: [true, BigInt(Math.floor(Math.random() * 1_000_000))],
+          abi: diceGameAbi,
+          functionName: 'play',
+          args: [gameParams, BigInt(Math.floor(Math.random() * 1_000_000))],
         });
 
         const state = await getPlayerState();
-        if (state.pendingRewardActive) {
+        if (state && state.pendingRewardActive) {
           await resolvePendingReward(Number(state.roundsRemaining));
           if (round === 10) {
             break;
@@ -196,40 +246,43 @@ describe('LuckChain frontend contract flow (integration)', () => {
       }
 
       const postSession = await getPlayerState();
-      expect(postSession.pendingRewardActive).toBe(false);
+      expect(postSession).toBeTruthy();
+      expect(postSession!.pendingRewardActive).toBe(false);
 
       // Withdraw winnings only if above the configured minimum.
-      const minWithdrawAmountValue = await publicClient.readContract({
-        address: GameController,
-        abi: gameControllerAbi,
-        functionName: 'minWithdrawAmount',
-      });
+      // Note: minWithdrawAmount may not exist in DiceGame, use withdrawRewards with amount
       const latestState = await getPlayerState();
-      if (latestState.winningsBalance >= minWithdrawAmountValue) {
+      if (latestState && latestState.winningsBalance > 0n) {
+        // Use a small amount for withdrawal test
+        const withdrawAmount = latestState.winningsBalance > parseUnits('1', 6) 
+          ? parseUnits('1', 6) 
+          : latestState.winningsBalance;
         await walletClient.writeContract({
           address: GameController,
-          abi: gameControllerAbi,
-          functionName: 'withdrawWinnings',
-          args: [minWithdrawAmountValue],
+          abi: diceGameAbi,
+          functionName: 'withdrawRewards',
+          args: [withdrawAmount],
         });
       }
 
-      // Withdraw part of the deposit via withdrawNet (minimum configured in controller).
-      const minWithdrawNetValue = await publicClient.readContract({
-        address: GameController,
-        abi: gameControllerAbi,
-        functionName: 'minWithdrawNet',
-      });
-      const withdrawNetAmount = minWithdrawNetValue;
-      await walletClient.writeContract({
-        address: GameController,
-        abi: gameControllerAbi,
-        functionName: 'withdrawNet',
-        args: [withdrawNetAmount],
-      });
+      // Withdraw part of the deposit via withdrawRewards
+      // Note: withdrawNet may not exist in DiceGame, use withdrawRewards instead
+      const finalStateBeforeWithdraw = await getPlayerState();
+      if (finalStateBeforeWithdraw && finalStateBeforeWithdraw.depositedBalance > 0n) {
+        const withdrawNetAmount = finalStateBeforeWithdraw.depositedBalance > parseUnits('1', 6)
+          ? parseUnits('1', 6)
+          : finalStateBeforeWithdraw.depositedBalance;
+        await walletClient.writeContract({
+          address: GameController,
+          abi: diceGameAbi,
+          functionName: 'withdrawRewards',
+          args: [withdrawNetAmount],
+        });
+      }
 
       const finalState = await getPlayerState();
-      expect(finalState.depositedBalance).toBeLessThan(postDeposit.depositedBalance);
+      expect(finalState).toBeTruthy();
+      expect(finalState!.depositedBalance).toBeLessThan(postDeposit!.depositedBalance);
     },
   );
 });

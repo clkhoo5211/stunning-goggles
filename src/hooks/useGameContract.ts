@@ -1,11 +1,13 @@
 import { useMemo, useRef } from 'react';
-import { useAccount, useReadContract, useWriteContract } from 'wagmi';
-import { parseUnits, formatUnits } from 'viem';
+import { useAccount, useReadContract, useWriteContract, usePublicClient } from 'wagmi';
+import { parseUnits, formatUnits, encodeAbiParameters } from 'viem';
 import addresses from '@lib/contracts/addresses.json';
-import { gameControllerAbi } from '@lib/contracts/abi/gameController';
+import { diceGameAbi } from '@lib/contracts/abi/diceGame';
+import { playerStorageAbi } from '@lib/contracts/abi/playerStorage';
 import { gameBoardAbi } from '@lib/contracts/abi/gameBoard';
 import { erc20Abi } from '@lib/contracts/abi/erc20';
 import { prizePoolAbi } from '@lib/contracts/abi/prizePool';
+import { gameconfigmoduleAbi } from '@lib/contracts/abi/gameconfigmodule';
 
 const USDT_DECIMALS = 6;
 const ONE_PPM = 1_000_000;
@@ -72,45 +74,103 @@ const applySafetyScaling = (
 export function useGameContract() {
   const { address } = useAccount();
   const { writeContractAsync } = useWriteContract();
+  const publicClient = usePublicClient();
 
   // In-flight guards to prevent accidental double-submits from rapid clicks
   const claimInFlightRef = useRef(false);
   const forfeitInFlightRef = useRef(false);
   const playRoundInFlightRef = useRef(false);
 
-  const gameControllerAddress = addresses.contracts.GameController as `0x${string}`;
+  // Use DiceGame contract address
+  const diceGameAddress = addresses.contracts.DiceGame as `0x${string}`;
+  const playerStorageAddress = addresses.contracts.PlayerStorage as `0x${string}`;
   const fallbackDepositTokenAddress = addresses.contracts.MockUSDT as `0x${string}`;
   const prizePoolAddress = addresses.contracts.PrizePool as `0x${string}`;
 
-  // Read player state
-  const { data: playerState, refetch: refetchPlayerState } = useReadContract({
-    address: gameControllerAddress,
-    abi: gameControllerAbi,
-    functionName: 'getPlayerState',
+  // Read player state from PlayerStorage (new architecture)
+  const { data: playerStateRaw, refetch: refetchPlayerState } = useReadContract({
+    address: playerStorageAddress,
+    abi: playerStorageAbi,
+    functionName: 'getPlayer',
     args: address ? [address] : undefined,
     query: {
-      enabled: !!address,
+      enabled: !!address && !!playerStorageAddress,
       refetchInterval: 5000, // Refetch every 5 seconds
     },
   });
 
-  const { data: chainDecisionState } = useReadContract({
-    address: gameControllerAddress,
-    abi: gameControllerAbi,
-    functionName: 'getDecisionState',
+  // Extract player state from tuple (PlayerState, bool)
+  const playerState = useMemo(() => {
+    if (!playerStateRaw) return undefined;
+    const [state, found] = playerStateRaw as [any, boolean];
+    return found ? state : undefined;
+  }, [playerStateRaw]);
+
+  // Read decision state from DiceGame's public mappings
+  const { data: pendingRewardActive } = useReadContract({
+    address: diceGameAddress,
+    abi: diceGameAbi,
+    functionName: 'pendingRewardActive',
     args: address ? [address] : undefined,
     query: {
-      enabled: !!address,
+      enabled: !!address && !!diceGameAddress,
       refetchInterval: 1000,
       refetchOnWindowFocus: true,
     },
   });
 
-  // Read all cell payouts
+  const { data: decisionDeadline } = useReadContract({
+    address: diceGameAddress,
+    abi: diceGameAbi,
+    functionName: 'decisionDeadlines',
+    args: address ? [address] : undefined,
+    query: {
+      enabled: !!address && !!diceGameAddress,
+      refetchInterval: 1000,
+      refetchOnWindowFocus: true,
+    },
+  });
+
+  const { data: pendingPayout } = useReadContract({
+    address: diceGameAddress,
+    abi: diceGameAbi,
+    functionName: 'pendingPayouts',
+    args: address ? [address] : undefined,
+    query: {
+      enabled: !!address && !!diceGameAddress,
+      refetchInterval: 1000,
+      refetchOnWindowFocus: true,
+    },
+  });
+
+  // Construct decision state from mappings
+  // Decision state from DiceGame contract
+  const decisionState = useMemo(() => {
+    if (!address) return null;
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    return {
+      pendingActive: pendingRewardActive || false,
+      deadline: decisionDeadline ? Number(decisionDeadline) : 0,
+      currentTimestamp,
+    };
+  }, [address, pendingRewardActive, decisionDeadline]);
+
+  // Read base cell payouts from GameBoard (for reference)
   const { data: rawCellPayouts } = useReadContract({
     address: addresses.contracts.GameBoard as `0x${string}`,
     abi: gameBoardAbi,
     functionName: 'getAllPayouts',
+  });
+
+  // Read dynamically adjusted cell payouts from DiceGame (applies boost + safety scaling)
+  const { data: rawAdjustedPayouts } = useReadContract({
+    address: diceGameAddress,
+    abi: diceGameAbi,
+    functionName: 'getAllAdjustedPayouts' as const,
+    query: {
+      refetchInterval: 5000, // Refetch every 5 seconds to update with pool changes
+      refetchOnWindowFocus: true,
+    },
   });
 
   const { data: rawPrizePoolBalance } = useReadContract({
@@ -144,40 +204,65 @@ export function useGameContract() {
   });
 
   const { data: depositFeeBpsRaw } = useReadContract({
-    address: gameControllerAddress,
-    abi: gameControllerAbi,
+    address: diceGameAddress,
+    abi: diceGameAbi,
     functionName: 'DEPOSIT_FEE_BPS' as const,
+    query: {
+      enabled: !!diceGameAddress,
+    },
   });
 
-  const { data: withdrawFeeBpsRaw } = useReadContract({
-    address: gameControllerAddress,
-    abi: gameControllerAbi,
-    functionName: 'withdrawFeeBps' as const,
-  });
-
+  // Note: withdrawFeeBps, costPerRound, roundsPerPackage, minDepositAmount, minWithdrawNet
+  // may need to be read from GameConfigModule in the new architecture
+  // For now, we'll try to read from DiceGame or use defaults
   const { data: rawCostPerRound } = useReadContract({
-    address: gameControllerAddress,
-    abi: gameControllerAbi,
-    functionName: 'costPerRound' as const,
+    address: addresses.contracts.GameConfigModule as `0x${string}`,
+    abi: [], // Will need GameConfigModule ABI
+    functionName: 'getCostPerRound' as const,
+    query: {
+      enabled: false, // Disable for now, will add GameConfigModule ABI later
+    },
   });
 
   const { data: rawRoundsPerPackage } = useReadContract({
-    address: gameControllerAddress,
-    abi: gameControllerAbi,
-    functionName: 'roundsPerPackage' as const,
+    address: addresses.contracts.GameConfigModule as `0x${string}`,
+    abi: [],
+    functionName: 'getRoundsPerPackage' as const,
+    query: {
+      enabled: false,
+    },
   });
 
-  const { data: rawMinDepositAmount } = useReadContract({
-    address: gameControllerAddress,
-    abi: gameControllerAbi,
-    functionName: 'minDepositAmount' as const,
+  // Read from GameConfigModule
+  const { data: rawWithdrawFeeBps } = useReadContract({
+    address: addresses.contracts.GameConfigModule as `0x${string}`,
+    abi: gameconfigmoduleAbi,
+    functionName: 'getWithdrawFeeBps' as const,
   });
 
-  const { data: rawMinWithdrawNet } = useReadContract({
-    address: gameControllerAddress,
-    abi: gameControllerAbi,
-    functionName: 'minWithdrawNet' as const,
+  const { data: rawMinDepositAmountData } = useReadContract({
+    address: addresses.contracts.GameConfigModule as `0x${string}`,
+    abi: gameconfigmoduleAbi,
+    functionName: 'getMinDepositAmount' as const,
   });
+
+  const { data: rawMinWithdrawNetData } = useReadContract({
+    address: addresses.contracts.GameConfigModule as `0x${string}`,
+    abi: gameconfigmoduleAbi,
+    functionName: 'getMinWithdrawNet' as const,
+  });
+
+  const { data: rawMinWithdrawAmountData } = useReadContract({
+    address: addresses.contracts.GameConfigModule as `0x${string}`,
+    abi: gameconfigmoduleAbi,
+    functionName: 'getMinWithdrawAmount' as const,
+  });
+
+  // Use defaults if not loaded yet
+  const withdrawFeeBpsRaw = rawWithdrawFeeBps ?? 50n; // Default 50 BPS (0.5%)
+  const rawMinDepositAmount = rawMinDepositAmountData ?? parseUnits('10', 6); // Default 10 USDT
+  const rawMinWithdrawNet = rawMinWithdrawNetData ?? parseUnits('1', 6); // Default 1 USDT
+  const rawMinWithdrawAmount = rawMinWithdrawAmountData ?? parseUnits('1999', 6); // Default 1999 USDT
 
   const { data: rawBoardSequence } = useReadContract({
     address: addresses.contracts.GameBoard as `0x${string}`,
@@ -185,37 +270,35 @@ export function useGameContract() {
     functionName: 'getBoardSequence' as const,
   });
 
-  const { data: rawPlatformStats } = useReadContract({
-    address: gameControllerAddress,
-    abi: gameControllerAbi,
-    functionName: 'getPlatformStats',
-    query: {
-      refetchInterval: 10000,
-      refetchOnWindowFocus: true,
-    },
-  });
+  // Platform stats and pool safety may need to be read from PrizePool or other contracts
+  // For now, we'll read prize pool balance directly
+  const rawPlatformStats = undefined; // Can be added later if needed
 
-  const { data: rawPoolSafety } = useReadContract({
-    address: gameControllerAddress,
-    abi: gameControllerAbi,
-    functionName: 'getPoolSafety',
-    query: {
-      refetchInterval: 5000,
-      refetchOnWindowFocus: true,
-    },
-  });
-
+  // Read safety config from GameConfigModule
   const { data: rawSafetyConfig } = useReadContract({
-    address: gameControllerAddress,
-    abi: gameControllerAbi,
-    functionName: 'safetyConfig',
+    address: addresses.contracts.GameConfigModule as `0x${string}`,
+    abi: gameconfigmoduleAbi,
+    functionName: 'getSafetyConfig' as const,
+    query: {
+      refetchInterval: 10000, // Refetch every 10 seconds
+      refetchOnWindowFocus: true,
+    },
   });
 
-  const { data: defaultDepositTokenData } = useReadContract({
-    address: gameControllerAddress,
-    abi: gameControllerAbi,
-    functionName: 'getDefaultDepositToken',
-  });
+  // Calculate poolSafety from prize pool balance and safety config
+  const poolSafety = useMemo(() => {
+    if (!rawPrizePoolBalance || !rawSafetyConfig) return undefined;
+    const poolBalance = Number(formatUnits(rawPrizePoolBalance, USDT_DECIMALS));
+    const reserveFloor = Number(formatUnits((rawSafetyConfig as any).reserveFloor, USDT_DECIMALS));
+    const safetyBalance = poolBalance > reserveFloor ? poolBalance - reserveFloor : 0;
+    return {
+      poolBalance,
+      safetyBalance,
+    };
+  }, [rawPrizePoolBalance, rawSafetyConfig]);
+
+  // Default deposit token - read from TokenRegistry or use MockUSDT
+  const defaultDepositTokenData = undefined;
 
   const defaultDepositToken = defaultDepositTokenData as
     | readonly [`0x${string}`, string, boolean]
@@ -228,15 +311,6 @@ export function useGameContract() {
     defaultDepositToken?.[2] === undefined ? true : Boolean(defaultDepositToken[2]);
 
   const payoutBoostPpm = rawPayoutBoostPpm ? Number(rawPayoutBoostPpm) : 0;
-
-  const poolSafety = useMemo(() => {
-    if (!rawPoolSafety) return undefined;
-    const [poolBalanceRaw, safetyBalanceRaw] = rawPoolSafety as readonly [bigint, bigint];
-    return {
-      poolBalance: Number(formatUnits(poolBalanceRaw, USDT_DECIMALS)),
-      safetyBalance: Number(formatUnits(safetyBalanceRaw, USDT_DECIMALS)),
-    };
-  }, [rawPoolSafety]);
 
   const safetyConfig = useMemo(() => {
     if (!rawSafetyConfig) return undefined;
@@ -269,18 +343,18 @@ export function useGameContract() {
     };
   }, [rawSafetyConfig]);
 
-  // Read deposit token allowance
+  // Read deposit token allowance (approve DiceGame to spend USDT)
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: depositTokenAddress,
     abi: erc20Abi,
     functionName: 'allowance',
-    args: address ? [address, gameControllerAddress] : undefined,
+    args: address ? [address, diceGameAddress] : undefined,
     query: {
-      enabled: !!address && depositTokenEnabled,
+      enabled: !!address && depositTokenEnabled && !!diceGameAddress,
     },
   });
 
-  const { data: depositTokenBalanceRaw } = useReadContract({
+  const { data: depositTokenBalanceRaw, refetch: refetchDepositTokenBalance } = useReadContract({
     address: depositTokenAddress,
     abi: erc20Abi,
     functionName: 'balanceOf',
@@ -297,26 +371,26 @@ export function useGameContract() {
       address: depositTokenAddress,
       abi: erc20Abi,
       functionName: 'approve',
-      args: [gameControllerAddress, amountWei],
+      args: [diceGameAddress, amountWei],
     });
   };
 
   const deposit = async (amount: string) => {
     const amountWei = parseUnits(amount, 6); // USDT has 6 decimals
     return writeContractAsync({
-      address: gameControllerAddress,
-      abi: gameControllerAbi,
+      address: diceGameAddress,
+      abi: diceGameAbi,
       functionName: 'deposit',
       args: [amountWei],
     });
   };
 
-  const buyRounds = async (numRounds: number, paymentMethod: 0 | 1 = 0) => {
+  const buyRounds = async (numRounds: number) => {
     return writeContractAsync({
-      address: gameControllerAddress,
-      abi: gameControllerAbi,
+      address: diceGameAddress,
+      abi: diceGameAbi,
       functionName: 'buyRounds',
-      args: [BigInt(numRounds), paymentMethod],
+      args: [BigInt(numRounds)],
     });
   };
 
@@ -331,16 +405,64 @@ export function useGameContract() {
       // Refetch player state to ensure it's fresh and prevent stale state issues
       await refetchPlayerState();
 
+      // Encode gameParams as bytes (DiceGame expects: (bool isClockwise, uint256))
+      // Encode both parameters as a tuple
+      const gameParams = encodeAbiParameters(
+        [
+          { type: 'bool', name: 'isClockwise' },
+          { type: 'uint256', name: 'unused' }
+        ],
+        [isClockwise, 0n]
+      );
+
       const seed = BigInt(Math.floor(Math.random() * 1000000));
+      
+      console.log('[playRound] Calling contract with:', {
+        address: diceGameAddress,
+        functionName: 'play',
+        gameParams,
+        seed: seed.toString(),
+        gas: '1500000',
+      });
+
+      // Try static call first to see if it would revert
+      if (publicClient && address) {
+        try {
+          await publicClient.simulateContract({
+            address: diceGameAddress,
+            abi: diceGameAbi,
+            functionName: 'play',
+            args: [gameParams, seed],
+            account: address,
+          });
+          console.log('[playRound] Static call succeeded - transaction should work');
+        } catch (staticError: any) {
+          console.error('[playRound] Static call failed - transaction will revert:', staticError);
+          console.error('[playRound] Static error details:', {
+            message: staticError?.message,
+            cause: staticError?.cause,
+            shortMessage: staticError?.shortMessage,
+          });
+          throw staticError;
+        }
+      }
+
       return await writeContractAsync({
-        address: gameControllerAddress,
-        abi: gameControllerAbi,
-        functionName: 'playRound',
-        args: [isClockwise, seed],
+        address: diceGameAddress,
+        abi: diceGameAbi,
+        functionName: 'play',
+        args: [gameParams, seed],
         gas: 1500000n, // Manual override to prevent gas estimation failures due to reroll loop
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('[playRound] Transaction failed:', error);
+      console.error('[playRound] Error details:', {
+        name: error?.constructor?.name,
+        message: error?.message,
+        cause: error?.cause,
+        shortMessage: error?.shortMessage,
+        data: error?.data,
+      });
       throw error;
     } finally {
       playRoundInFlightRef.current = false;
@@ -355,9 +477,9 @@ export function useGameContract() {
     claimInFlightRef.current = true;
     try {
       return await writeContractAsync({
-        address: gameControllerAddress,
-        abi: gameControllerAbi,
-        functionName: 'claimPendingReward',
+        address: diceGameAddress,
+        abi: diceGameAbi,
+        functionName: 'claimReward', // New function name
         args: [],
       });
     } finally {
@@ -373,9 +495,9 @@ export function useGameContract() {
     forfeitInFlightRef.current = true;
     try {
       return await writeContractAsync({
-        address: gameControllerAddress,
-        abi: gameControllerAbi,
-        functionName: 'forfeitPendingReward',
+        address: diceGameAddress,
+        abi: diceGameAbi,
+        functionName: 'forfeitReward', // New function name
         args: [],
       });
     } finally {
@@ -386,24 +508,43 @@ export function useGameContract() {
   const withdrawWinnings = async (amount?: string) => {
     const amountWei = amount ? parseUnits(amount, 6) : BigInt(0);
     return writeContractAsync({
-      address: gameControllerAddress,
-      abi: gameControllerAbi,
-      functionName: 'withdrawWinnings',
+      address: diceGameAddress,
+      abi: diceGameAbi,
+      functionName: 'withdrawRewards', // New function name
       args: [amountWei],
     });
   };
 
   const withdrawNet = async (netAmount: string) => {
+    // withdrawNet exists in DiceGame contract - it handles net amount calculation
+    // Uses winnings first, then deposits, and calculates fees automatically
     const amountWei = parseUnits(netAmount, 6);
     return writeContractAsync({
-      address: gameControllerAddress,
-      abi: gameControllerAbi,
+      address: diceGameAddress,
+      abi: diceGameAbi,
       functionName: 'withdrawNet',
       args: [amountWei],
     });
   };
 
+  const withdrawDeposit = async (amount?: string) => {
+    // withdrawDeposit allows withdrawing just deposits (not winnings)
+    // Pass 0 or undefined to withdraw all remaining deposits
+    const amountWei = amount ? parseUnits(amount, 6) : BigInt(0);
+    return writeContractAsync({
+      address: diceGameAddress,
+      abi: diceGameAbi,
+      functionName: 'withdrawDeposit',
+      args: [amountWei],
+    });
+  };
+
   // Format player state for easier use
+  // Use pendingPayout from DiceGame mapping if available, otherwise from playerState
+  const effectivePendingPayout = pendingPayout ? pendingPayout : (playerState?.pendingPayout || 0n);
+  const effectiveDecisionDeadline = decisionDeadline ? decisionDeadline : (playerState?.decisionDeadline || 0n);
+  const effectivePendingRewardActive = pendingRewardActive !== undefined ? pendingRewardActive : (playerState?.pendingRewardActive || false);
+
   const formattedPlayerState = playerState
     ? (() => {
       const lastDiceSource = Array.isArray(playerState.lastDiceValues)
@@ -411,32 +552,32 @@ export function useGameContract() {
         : Array.from(playerState.lastDiceValues ?? []);
 
       const lastDiceValues = lastDiceSource.map((value: number | bigint) => Number(value));
-      const lastDiceSum = lastDiceValues.reduce((total, face) => total + face, 0);
-      const hasRecordedRoll = lastDiceValues.some((face) => face > 0);
+      const lastDiceSum = lastDiceValues.reduce((total: number, face: number) => total + face, 0);
+      const hasRecordedRoll = lastDiceValues.some((face: number) => face > 0);
       const lastDiceIsBaozi =
-        hasRecordedRoll && lastDiceValues.every((face) => face === lastDiceValues[0]);
+        hasRecordedRoll && lastDiceValues.every((face: number) => face === lastDiceValues[0]);
 
       return {
-        depositedBalance: formatUnits(playerState.depositedBalance, 6),
-        winningsBalance: formatUnits(playerState.winningsBalance, 6),
-        totalDeposited: formatUnits(playerState.totalDeposited, 6),
-        totalWithdrawn: formatUnits(playerState.totalWithdrawn, 6),
-        lifetimeWinnings: formatUnits(playerState.lifetimeWinnings, 6),
-        pendingPayout: formatUnits(playerState.pendingPayout, 6),
-        pendingGameId: Number(playerState.pendingGameId),
-        roundsRemaining: Number(playerState.roundsRemaining),
-        totalRoundsPlayed: Number(playerState.totalRoundsPlayed),
-        lastDepositTime: Number(playerState.lastDepositTime),
-        lastPlayTimestamp: Number(playerState.lastPlayTimestamp),
-        currentPosition: Number(playerState.currentPosition),
-        hasActiveSession: playerState.hasActiveSession,
-        totalWins: Number(playerState.totalWins),
-        totalLosses: Number(playerState.totalLosses),
-        decisionDeadline: Number(playerState.decisionDeadline),
-        pendingStartCell: Number(playerState.pendingStartCell),
-        pendingEndCell: Number(playerState.pendingEndCell),
-        pendingRewardActive: playerState.pendingRewardActive,
-        lastDirectionClockwise: playerState.lastDirectionClockwise,
+        depositedBalance: formatUnits(playerState.depositedBalance || 0n, 6),
+        winningsBalance: formatUnits(playerState.winningsBalance || 0n, 6),
+        totalDeposited: formatUnits(playerState.totalDeposited || 0n, 6),
+        totalWithdrawn: formatUnits(playerState.totalWithdrawn || 0n, 6),
+        lifetimeWinnings: formatUnits(playerState.lifetimeWinnings || 0n, 6),
+        pendingPayout: formatUnits(effectivePendingPayout, 6),
+        pendingGameId: Number(playerState.pendingGameId || 0n),
+        roundsRemaining: Number(playerState.roundsRemaining || 0n),
+        totalRoundsPlayed: Number(playerState.totalRoundsPlayed || 0n),
+        lastDepositTime: Number(playerState.lastDepositTime || 0n),
+        lastPlayTimestamp: Number(playerState.lastPlayTimestamp || 0n),
+        currentPosition: Number(playerState.currentPosition || 0),
+        hasActiveSession: playerState.hasActiveSession || false,
+        totalWins: Number(playerState.totalWins || 0n),
+        totalLosses: Number(playerState.totalLosses || 0n),
+        decisionDeadline: Number(effectiveDecisionDeadline),
+        pendingStartCell: Number(playerState.pendingStartCell || 0),
+        pendingEndCell: Number(playerState.pendingEndCell || 0),
+        pendingRewardActive: effectivePendingRewardActive,
+        lastDirectionClockwise: playerState.lastDirectionClockwise || false,
         lastDiceValues,
         lastDiceSum,
         lastDiceIsBaozi,
@@ -451,33 +592,45 @@ export function useGameContract() {
     )
     : undefined;
 
+  // Use adjusted payouts from contract (includes boost + safety scaling)
+  // Convert from USDT (6 decimals) to Yuan for display
   const scaledCellPayouts = useMemo(() => {
-    if (!baseCellPayouts || !poolSafety || !safetyConfig) {
-      return undefined;
+    if (!rawAdjustedPayouts || !baseCellPayouts) {
+      // Fallback to local calculation if contract call fails
+      if (!baseCellPayouts || !poolSafety || !safetyConfig) {
+        return undefined;
+      }
+      return baseCellPayouts.map((value) => {
+        if (value === 0) return value;
+        const isNegative = value < 0;
+        const magnitude = Math.abs(value);
+        const boosted = applyBoost(magnitude, payoutBoostPpm);
+        const scaled = applySafetyScaling(
+          boosted,
+          poolSafety.poolBalance,
+          poolSafety.safetyBalance,
+          safetyConfig
+        );
+        const finalValue = Number.isFinite(scaled) ? Number(scaled.toFixed(2)) : magnitude;
+        return isNegative ? -finalValue : finalValue;
+      });
     }
-    return baseCellPayouts.map((value) => {
-      if (value === 0) return value;
-      const isNegative = value < 0;
-      const magnitude = Math.abs(value);
-      const boosted = applyBoost(magnitude, payoutBoostPpm);
-      const scaled = applySafetyScaling(
-        boosted,
-        poolSafety.poolBalance,
-        poolSafety.safetyBalance,
-        safetyConfig
-      );
-      const finalValue = Number.isFinite(scaled) ? Number(scaled.toFixed(2)) : magnitude;
-      return isNegative ? -finalValue : finalValue;
+    
+    // Convert adjusted payouts from USDT (6 decimals) back to Yuan for display
+    // The contract returns payouts in USDT with 6 decimals, but we display in Yuan
+    return Array.from(rawAdjustedPayouts as readonly bigint[]).map((adjustedPayout, index) => {
+      const basePayout = baseCellPayouts[index];
+      if (basePayout === 0) return 0;
+      const isNegative = basePayout < 0;
+      
+      // Convert from USDT (6 decimals) to Yuan
+      const adjustedYuan = Number(formatUnits(adjustedPayout, 6));
+      return isNegative ? -adjustedYuan : adjustedYuan;
     });
-  }, [baseCellPayouts, payoutBoostPpm, poolSafety, safetyConfig]);
+  }, [rawAdjustedPayouts, baseCellPayouts, poolSafety, safetyConfig, payoutBoostPpm]);
 
-  const decisionState = chainDecisionState
-    ? {
-      pendingActive: chainDecisionState[0] as boolean,
-      deadline: Number(chainDecisionState[1]),
-      currentTimestamp: Number(chainDecisionState[2]),
-    }
-    : null;
+  // decisionState is already constructed from mappings above
+  // No need to reconstruct it
 
   return {
     playerState: formattedPlayerState,
@@ -502,6 +655,7 @@ export function useGameContract() {
     costPerRound: rawCostPerRound ? formatUnits(rawCostPerRound, 6) : undefined,
     roundsPerPackage: rawRoundsPerPackage ? Number(rawRoundsPerPackage) : undefined,
     minDepositAmount: rawMinDepositAmount ? formatUnits(rawMinDepositAmount, 6) : undefined,
+    minWithdrawAmount: rawMinWithdrawAmount ? formatUnits(rawMinWithdrawAmount, 6) : undefined,
     minWithdrawNet: rawMinWithdrawNet ? formatUnits(rawMinWithdrawNet, 6) : undefined,
     boardSequence: rawBoardSequence
       ? Array.from(rawBoardSequence as unknown as readonly (number | bigint)[], (value) =>
@@ -515,12 +669,14 @@ export function useGameContract() {
     approveDepositToken,
     depositTokenAllowance: allowance ? formatUnits(allowance, 6) : '0',
     depositTokenBalance: depositTokenBalanceRaw ? formatUnits(depositTokenBalanceRaw, 6) : '0',
+    refetchDepositTokenBalance,
     buyRounds,
     playRound,
     claimPendingReward,
     forfeitPendingReward,
     withdrawWinnings,
     withdrawNet,
+    withdrawDeposit,
     refetchPlayerState,
     refetchAllowance,
   };

@@ -1,5 +1,6 @@
 import { decodeErrorResult } from 'viem';
 import { gameControllerAbi } from '@lib/contracts/abi/gameController';
+import { diceGameAbi } from '@lib/contracts/abi/diceGame';
 import { luckGovernorAbi } from '@lib/contracts/abi/luckGovernor';
 
 const CUSTOM_MESSAGES: Record<string, string> = {
@@ -59,7 +60,20 @@ const extractHexData = (error: unknown): (`0x${string}`)[] => {
 
 const decodeCustomError = (error: unknown): string | null => {
   for (const hex of extractHexData(error)) {
-    // Try gameController ABI first
+    // Try diceGame ABI first (new architecture)
+    try {
+      const decoded = decodeErrorResult({
+        abi: diceGameAbi,
+        data: hex,
+      });
+      if (decoded?.errorName) {
+        return CUSTOM_MESSAGES[decoded.errorName] ?? decoded.errorName;
+      }
+    } catch {
+      // Ignore decode failures and continue trying other candidates
+    }
+
+    // Try gameController ABI (old architecture, backward compatibility)
     try {
       const decoded = decodeErrorResult({
         abi: gameControllerAbi,

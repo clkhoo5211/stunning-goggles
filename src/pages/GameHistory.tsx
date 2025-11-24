@@ -1,7 +1,11 @@
 import { motion } from 'framer-motion';
 import { useAccount } from 'wagmi';
-import { Loader2, Trophy, Clock, Coins } from 'lucide-react';
-import { useGameHistory } from '@hooks/useGameHistory';
+import { Loader2, Trophy, Clock, Coins, TrendingUp, Image as ImageIcon, ExternalLink } from 'lucide-react';
+import { useGameHistory, POOL_CONTRIBUTION_SOURCES } from '@hooks/useGameHistory';
+import { useNFTHistory } from '@hooks/useNFTHistory';
+import { useLendingHistory } from '@hooks/useLendingHistory';
+import { formatUnits } from 'viem';
+import addresses from '@lib/contracts/addresses.json';
 
 function formatTimestamp(timestamp?: number) {
   if (!timestamp) return 'Pending';
@@ -10,7 +14,20 @@ function formatTimestamp(timestamp?: number) {
 
 export default function GameHistory() {
   const { isConnected } = useAccount();
-  const { history, isLoading, error } = useGameHistory();
+  const { history: gameHistory, isLoading: isLoadingGame, error: gameError } = useGameHistory();
+  const { history: nftHistory, isLoading: isLoadingNFT, error: nftError } = useNFTHistory();
+  const { history: lendingHistory, isLoading: isLoadingLending, error: lendingError } = useLendingHistory();
+  
+  // Merge and sort all histories by block number
+  const allHistory = [...gameHistory, ...nftHistory as any[], ...lendingHistory as any[]].sort((a, b) => {
+    const blockA = typeof a.blockNumber === 'bigint' ? Number(a.blockNumber) : 0;
+    const blockB = typeof b.blockNumber === 'bigint' ? Number(b.blockNumber) : 0;
+    return blockB - blockA; // Most recent first
+  });
+  
+  const isLoading = isLoadingGame || isLoadingNFT || isLoadingLending;
+  const error = gameError || nftError || lendingError;
+  const history = allHistory;
 
   if (!isConnected) {
     return (
@@ -90,7 +107,7 @@ export default function GameHistory() {
               Pulled directly from the on-chain activity logger (most recent first)
             </p>
           </div>
-          <div className="flex items-center gap-3 text-sm text-slate-400">
+          <div className="flex items-center gap-3 text-sm text-slate-400 flex-wrap">
             <div className="flex items-center gap-1">
               <Coins className="w-4 h-4" />
               {history.filter((entry) => entry.action === 'Deposit').length} Deposits
@@ -98,6 +115,14 @@ export default function GameHistory() {
             <div className="flex items-center gap-1">
               <Trophy className="w-4 h-4" />
               {totalWins} Wins
+            </div>
+            <div className="flex items-center gap-1">
+              <ImageIcon className="w-4 h-4" />
+              {nftHistory.length} NFT Activities
+            </div>
+            <div className="flex items-center gap-1">
+              <Coins className="w-4 h-4" />
+              {lendingHistory.length} Lending Activities
             </div>
           </div>
         </div>
@@ -116,7 +141,21 @@ export default function GameHistory() {
             <tbody className="divide-y divide-slate-800/60">
               {history.map((entry) => (
                 <tr key={`${entry.txHash}-${entry.logIndex ?? entry.blockNumber}`} className="hover:bg-slate-900/40">
-                  <td className="px-4 py-3 font-semibold text-slate-200">{entry.action}</td>
+                  <td className="px-4 py-3 font-semibold text-slate-200">
+                    {entry.action === 'Deposit Collateral' ? (
+                      <span className="text-cyan-400">Deposit Collateral</span>
+                    ) : entry.action === 'Withdraw Collateral' ? (
+                      <span className="text-yellow-400">Withdraw Collateral</span>
+                    ) : entry.action === 'Borrow' ? (
+                      <span className="text-purple-400">Borrow</span>
+                    ) : entry.action === 'Repay' ? (
+                      <span className="text-green-400">Repay</span>
+                    ) : entry.action === 'Liquidated' ? (
+                      <span className="text-red-400">Liquidated</span>
+                    ) : (
+                      entry.action
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-slate-400">
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4" />
@@ -180,16 +219,122 @@ export default function GameHistory() {
                       <div className="text-xs text-slate-400">
                         Penalty refund of {Number(entry.amount).toFixed(2)} USDT • {entry.rounds || 0} rounds restored
                       </div>
+                    ) : entry.action === 'Pool Contribution' ? (
+                      <div className="text-xs text-blue-300 flex items-center gap-1">
+                        <TrendingUp className="w-3 h-3" />
+                        {POOL_CONTRIBUTION_SOURCES[entry.endPosition] || 'Unknown'} contribution to prize pool
+                      </div>
+                    ) : entry.action === 'NFT Listed' ? (
+                      <div className="text-xs text-slate-400">
+                        NFT #{entry.tokenId?.toString()} • {entry.listingType} • {entry.price} {entry.paymentToken?.toLowerCase() === addresses.contracts.MockUSDT?.toLowerCase() ? 'USDT' : 'PLATFORM'}
+                      </div>
+                    ) : entry.action === 'NFT Purchased' ? (
+                      <div className="text-xs text-green-300">
+                        Purchased NFT #{entry.tokenId?.toString()} for {entry.price} {entry.paymentToken?.toLowerCase() === addresses.contracts.MockUSDT?.toLowerCase() ? 'USDT' : 'PLATFORM'}
+                      </div>
+                    ) : entry.action === 'Listing Cancelled' ? (
+                      <div className="text-xs text-slate-400">
+                        Cancelled listing for NFT #{entry.tokenId?.toString()}
+                      </div>
+                    ) : entry.action === 'Auction Bid' ? (
+                      <div className="text-xs text-purple-300">
+                        Bid {entry.amount} {entry.paymentToken?.toLowerCase() === addresses.contracts.MockUSDT?.toLowerCase() ? 'USDT' : 'PLATFORM'} on NFT #{entry.tokenId?.toString()}
+                      </div>
+                    ) : entry.action === 'Bid Refunded' ? (
+                      <div className="text-xs text-blue-300">
+                        Refunded {entry.amount} {entry.paymentToken?.toLowerCase() === addresses.contracts.MockUSDT?.toLowerCase() ? 'USDT' : 'PLATFORM'} for NFT #{entry.tokenId?.toString()}
+                      </div>
+                    ) : entry.action === 'Auction Settled' ? (
+                      <div className="text-xs text-green-300">
+                        Auction completed • NFT #{entry.tokenId?.toString()} sold for {entry.amount} {entry.paymentToken?.toLowerCase() === addresses.contracts.MockUSDT?.toLowerCase() ? 'USDT' : 'PLATFORM'}
+                      </div>
+                    ) : entry.action === 'Offer Created' ? (
+                      <div className="text-xs text-blue-300">
+                        Offered {entry.amount} {entry.paymentToken?.toLowerCase() === addresses.contracts.MockUSDT?.toLowerCase() ? 'USDT' : 'PLATFORM'} on NFT #{entry.tokenId?.toString()}
+                      </div>
+                    ) : entry.action === 'Offer Accepted' ? (
+                      <div className="text-xs text-green-300">
+                        Accepted offer • NFT #{entry.tokenId?.toString()} sold for {entry.amount} {entry.paymentToken?.toLowerCase() === addresses.contracts.MockUSDT?.toLowerCase() ? 'USDT' : 'PLATFORM'}
+                      </div>
+                    ) : entry.action === 'Offer Cancelled' || entry.action === 'Offer Expired' ? (
+                      <div className="text-xs text-slate-400">
+                        {entry.action === 'Offer Cancelled' ? 'Cancelled' : 'Expired'} offer on NFT #{entry.tokenId?.toString()} • Refunded {entry.amount} {entry.paymentToken?.toLowerCase() === addresses.contracts.MockUSDT?.toLowerCase() ? 'USDT' : 'PLATFORM'}
+                      </div>
+                    ) : entry.action === 'Deposit Collateral' ? (
+                      <div className="text-xs text-slate-400">
+                        Deposited {parseFloat(entry.amount).toLocaleString()} {entry.tokenSymbol}
+                      </div>
+                    ) : entry.action === 'Withdraw Collateral' ? (
+                      <div className="text-xs text-slate-400">
+                        Withdrew {parseFloat(entry.amount).toLocaleString()} {entry.tokenSymbol}
+                      </div>
+                    ) : entry.action === 'Borrow' ? (
+                      <>
+                        <div className="text-xs text-slate-400">
+                          Borrowed {parseFloat(entry.amount).toLocaleString()} {entry.tokenSymbol}
+                        </div>
+                        {entry.healthFactor && (
+                          <div className="text-xs text-slate-500">
+                            Health Factor: {parseFloat(entry.healthFactor).toFixed(2)}
+                          </div>
+                        )}
+                      </>
+                    ) : entry.action === 'Repay' ? (
+                      <>
+                        <div className="text-xs text-slate-400">
+                          Repaid {parseFloat(entry.amount).toLocaleString()} {entry.tokenSymbol}
+                        </div>
+                        {entry.remainingDebt && parseFloat(entry.remainingDebt) > 0 && (
+                          <div className="text-xs text-slate-500">
+                            Remaining Debt: {parseFloat(entry.remainingDebt).toLocaleString()} PLATFORM
+                          </div>
+                        )}
+                        {entry.remainingDebt && parseFloat(entry.remainingDebt) === 0 && (
+                          <div className="text-xs text-green-400">✓ Fully Repaid</div>
+                        )}
+                      </>
+                    ) : entry.action === 'Liquidated' ? (
+                      <>
+                        <div className="text-xs text-red-300">
+                          Position liquidated by {entry.liquidator?.slice(0, 6)}...{entry.liquidator?.slice(-4)}
+                        </div>
+                        {entry.debtAmount && (
+                          <div className="text-xs text-slate-500">
+                            Debt: {parseFloat(entry.debtAmount).toLocaleString()} PLATFORM
+                          </div>
+                        )}
+                        {entry.collateralAmount && (
+                          <div className="text-xs text-slate-500">
+                            Collateral: {parseFloat(entry.collateralAmount).toLocaleString()} {entry.tokenSymbol}
+                          </div>
+                        )}
+                      </>
                     ) : (
                       <div className="text-xs text-slate-400">—</div>
                     )}
                   </td>
                   <td className="px-4 py-3 text-slate-200 font-semibold">
-                    {['Play Round', 'Pending Reward', 'Reward Claimed', 'Reward Forfeited', 'Leopard Bonus'].includes(
+                    {entry.action === 'Pool Contribution' ? (
+                      <span className="text-blue-300">{Number(entry.amount).toFixed(2)} USDT</span>
+                    ) : ['Play Round', 'Pending Reward', 'Reward Claimed', 'Reward Forfeited', 'Leopard Bonus'].includes(
                       entry.action,
                     )
                       ? `${Number(entry.payout).toFixed(2)} USDT`
-                      : `${Number(entry.amount).toFixed(2)} USDT`}
+                      : ['NFT Listed', 'NFT Purchased', 'Auction Bid', 'Auction Settled', 'Offer Created', 'Offer Accepted', 'Bid Refunded', 'Offer Cancelled', 'Offer Expired'].includes(entry.action)
+                      ? entry.amount && entry.paymentToken
+                        ? `${Number(entry.amount).toFixed(entry.paymentToken.toLowerCase() === addresses.contracts.MockUSDT?.toLowerCase() ? 2 : 6)} ${entry.paymentToken.toLowerCase() === addresses.contracts.MockUSDT?.toLowerCase() ? 'USDT' : 'PLATFORM'}`
+                        : entry.amount
+                        ? `${Number(entry.amount).toFixed(2)}`
+                        : '—'
+                      : ['Deposit Collateral', 'Withdraw Collateral', 'Borrow', 'Repay', 'Liquidated'].includes(entry.action)
+                      ? entry.amount && entry.tokenSymbol
+                        ? `${parseFloat(entry.amount).toLocaleString()} ${entry.tokenSymbol}`
+                        : entry.amount
+                        ? `${parseFloat(entry.amount).toLocaleString()}`
+                        : '—'
+                      : entry.amount
+                      ? `${Number(entry.amount).toFixed(2)} USDT`
+                      : '—'}
                   </td>
                   <td className="px-4 py-3 text-slate-300">
                     {entry.action === 'Play Round'
@@ -198,6 +343,30 @@ export default function GameHistory() {
                       ? `Game #${entry.gameId}`
                       : entry.action === 'Buy Session'
                       ? `${entry.rounds || 10} rounds`
+                      : entry.action === 'Pool Contribution'
+                      ? POOL_CONTRIBUTION_SOURCES[entry.endPosition] || 'Unknown'
+                      : ['NFT Listed', 'NFT Purchased', 'Listing Cancelled', 'Auction Bid', 'Auction Settled', 'Offer Created', 'Offer Accepted', 'Offer Cancelled', 'Offer Expired', 'Bid Refunded'].includes(entry.action)
+                      ? entry.tokenId
+                        ? `NFT #${entry.tokenId.toString()}`
+                        : entry.listingId
+                        ? `Listing #${entry.listingId.toString()}`
+                        : entry.offerId
+                        ? `Offer #${entry.offerId.toString()}`
+                        : '—'
+                      : ['Deposit Collateral', 'Withdraw Collateral', 'Borrow', 'Repay', 'Liquidated'].includes(entry.action)
+                      ? entry.txHash
+                        ? (
+                            <a
+                              href={`https://localhost:8545/tx/${entry.txHash}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 text-xs"
+                            >
+                              View
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )
+                        : '—'
                       : '—'}
                   </td>
                 </tr>

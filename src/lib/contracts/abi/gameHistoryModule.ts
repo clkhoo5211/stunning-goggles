@@ -1,4 +1,4 @@
-export const gameHistoryModuleAbi = [
+export const gamehistorymoduleAbi = [
   {
     "inputs": [],
     "stateMutability": "nonpayable",
@@ -89,7 +89,13 @@ export const gameHistoryModuleAbi = [
       {
         "indexed": true,
         "internalType": "bytes32",
-        "name": "gameKey",
+        "name": "gameId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "gameType",
         "type": "bytes32"
       },
       {
@@ -100,24 +106,12 @@ export const gameHistoryModuleAbi = [
       },
       {
         "indexed": false,
-        "internalType": "enum IGameHistoryModule.Action",
-        "name": "action",
-        "type": "uint8"
-      },
-      {
-        "indexed": false,
         "internalType": "uint256",
-        "name": "value1",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "value2",
+        "name": "timestamp",
         "type": "uint256"
       }
     ],
-    "name": "HistoryRecorded",
+    "name": "GameHistoryRecorded",
     "type": "event"
   },
   {
@@ -264,11 +258,72 @@ export const gameHistoryModuleAbi = [
     "inputs": [
       {
         "internalType": "bytes32",
-        "name": "gameKey",
+        "name": "gameId",
         "type": "bytes32"
       }
     ],
-    "name": "getEventCount",
+    "name": "getGameHistory",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "gameId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "gameType",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "player",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "outcome",
+            "type": "bytes"
+          },
+          {
+            "internalType": "uint256",
+            "name": "reward",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "penalty",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "blockNumber",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct IGameHistoryModule.GameHistoryEntry",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "gameId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getGameHistoryCount",
     "outputs": [
       {
         "internalType": "uint256",
@@ -283,51 +338,137 @@ export const gameHistoryModuleAbi = [
     "inputs": [
       {
         "internalType": "bytes32",
-        "name": "gameKey",
+        "name": "gameType",
         "type": "bytes32"
       },
       {
         "internalType": "uint256",
-        "name": "start",
+        "name": "offset",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "count",
+        "name": "limit",
         "type": "uint256"
       }
     ],
-    "name": "getEvents",
+    "name": "getGameTypeHistory",
     "outputs": [
       {
         "components": [
+          {
+            "internalType": "bytes32",
+            "name": "gameId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "gameType",
+            "type": "bytes32"
+          },
           {
             "internalType": "address",
             "name": "player",
             "type": "address"
           },
           {
-            "internalType": "enum IGameHistoryModule.Action",
-            "name": "action",
-            "type": "uint8"
+            "internalType": "bytes",
+            "name": "outcome",
+            "type": "bytes"
           },
           {
             "internalType": "uint256",
-            "name": "primaryValue",
+            "name": "reward",
             "type": "uint256"
           },
           {
             "internalType": "uint256",
-            "name": "secondaryValue",
+            "name": "penalty",
             "type": "uint256"
           },
           {
-            "internalType": "uint64",
+            "internalType": "uint256",
             "name": "timestamp",
-            "type": "uint64"
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "blockNumber",
+            "type": "uint256"
           }
         ],
-        "internalType": "struct IGameHistoryModule.HistoryEvent[]",
+        "internalType": "struct IGameHistoryModule.GameHistoryEntry[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "player",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "offset",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "limit",
+        "type": "uint256"
+      }
+    ],
+    "name": "getPlayerGameHistory",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "gameId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "gameType",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "player",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "outcome",
+            "type": "bytes"
+          },
+          {
+            "internalType": "uint256",
+            "name": "reward",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "penalty",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "blockNumber",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct IGameHistoryModule.GameHistoryEntry[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -410,25 +551,6 @@ export const gameHistoryModuleAbi = [
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "isWriter",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "proxiableUUID",
     "outputs": [
@@ -445,43 +567,36 @@ export const gameHistoryModuleAbi = [
     "inputs": [
       {
         "internalType": "bytes32",
-        "name": "gameKey",
+        "name": "gameId",
         "type": "bytes32"
       },
       {
-        "components": [
-          {
-            "internalType": "address",
-            "name": "player",
-            "type": "address"
-          },
-          {
-            "internalType": "enum IGameHistoryModule.Action",
-            "name": "action",
-            "type": "uint8"
-          },
-          {
-            "internalType": "uint256",
-            "name": "primaryValue",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "secondaryValue",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint64",
-            "name": "timestamp",
-            "type": "uint64"
-          }
-        ],
-        "internalType": "struct IGameHistoryModule.HistoryEvent",
-        "name": "entry",
-        "type": "tuple"
+        "internalType": "bytes32",
+        "name": "gameType",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "player",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "outcome",
+        "type": "bytes"
+      },
+      {
+        "internalType": "uint256",
+        "name": "reward",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "penalty",
+        "type": "uint256"
       }
     ],
-    "name": "recordEvent",
+    "name": "recordGameHistory",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

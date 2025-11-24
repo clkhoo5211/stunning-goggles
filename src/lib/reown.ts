@@ -30,7 +30,7 @@ export const hardhatLocal = defineChain({
     public: { http: ['http://127.0.0.1:8545'] },
   },
   blockExplorers: {
-    default: { name: 'Hardhat RPC', url: 'http://127.0.0.1:8545' },
+    default: { name: 'Hardhat Local', url: 'http://127.0.0.1:8545' },
   },
 });
 
@@ -70,6 +70,8 @@ export const appKit = createAppKit({
   adapters: [wagmiAdapter],
   networks,
   projectId,
+  // Note: The RPC URL for Hardhat Local is already configured in the hardhatLocal chain definition
+  // The nativeCurrency balance should be fetched correctly when the wallet is on the Hardhat Local network
   metadata: {
     name: 'LuckChain',
     description: 'Provably Fair Blockchain Gaming Platform',
