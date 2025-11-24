@@ -11,7 +11,7 @@ interface OfferModalProps {
 }
 
 export function OfferModal({ isOpen, onClose, tokenId, onSuccess }: OfferModalProps) {
-  const { createOffer, isLoading, offerSystemAddress } = useOfferSystem();
+  const { createOffer, isLoading } = useOfferSystem();
   const [amount, setAmount] = useState('');
   const [paymentToken, setPaymentToken] = useState<`0x${string}`>(addresses.contracts.MockUSDT as `0x${string}`);
   const [expirationDays, setExpirationDays] = useState('7');

@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import { useAccount, useReadContract, useWriteContract, usePublicClient } from 'wagmi';
+import { usePublicClient } from 'wagmi';
 import { nftRegistryAbi } from '@lib/contracts/abi/nftRegistry';
 import addresses from '@lib/contracts/addresses.json';
 
@@ -20,8 +19,6 @@ export interface GameNFT {
 }
 
 export function useNFTRegistry() {
-  const { address } = useAccount();
-  const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
 
   // Get contract address from addresses.json (will need to be added)

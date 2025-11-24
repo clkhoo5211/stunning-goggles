@@ -4,7 +4,6 @@ import { Loader2, Trophy, Clock, Coins, TrendingUp, Image as ImageIcon, External
 import { useGameHistory, POOL_CONTRIBUTION_SOURCES } from '@hooks/useGameHistory';
 import { useNFTHistory } from '@hooks/useNFTHistory';
 import { useLendingHistory } from '@hooks/useLendingHistory';
-import { formatUnits } from 'viem';
 import addresses from '@lib/contracts/addresses.json';
 
 function formatTimestamp(timestamp?: number) {

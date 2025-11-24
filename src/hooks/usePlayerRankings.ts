@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { usePublicClient, useReadContract } from 'wagmi';
+import { usePublicClient } from 'wagmi';
 import { formatUnits } from 'viem';
 import addresses from '@lib/contracts/addresses.json';
 import { activityLoggerAbi } from '@lib/contracts/abi/activityLogger';

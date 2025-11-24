@@ -19,15 +19,6 @@ import { useGameHistory } from '@hooks/useGameHistory';
 
 const USDT_DECIMALS = 6;
 
-function formatDate(timestamp?: bigint | number): string {
-  if (!timestamp || Number(timestamp) === 0) return 'Never';
-  return new Date(Number(timestamp) * 1000).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
 function formatDateTime(timestamp?: bigint | number): string {
   if (!timestamp || Number(timestamp) === 0) return 'Never';
   return new Date(Number(timestamp) * 1000).toLocaleString('en-US', {

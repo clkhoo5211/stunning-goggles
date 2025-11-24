@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useAccount } from 'wagmi';
 import { useNFTMarketplace, ListingType, NFTListing } from '@hooks/useNFTMarketplace';
 import { useAuctionHouse } from '@hooks/useAuctionHouse';

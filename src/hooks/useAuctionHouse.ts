@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAccount, useWriteContract, usePublicClient } from 'wagmi';
-import { parseUnits, formatUnits } from 'viem';
+import { parseUnits } from 'viem';
 import { toast } from 'sonner';
 import { auctionHouseAbi } from '@lib/contracts/abi/auctionHouse';
 import { erc20Abi } from '@lib/contracts/abi/erc20';

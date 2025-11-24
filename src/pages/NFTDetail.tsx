@@ -8,16 +8,15 @@ import { useNFTListings } from '@hooks/useNFTListings';
 import { useAuctionHouse } from '@hooks/useAuctionHouse';
 import { useOfferSystem } from '@hooks/useOfferSystem';
 import { CreateListingModal, BidModal, OfferModal } from '@components/marketplace';
-import { ListingCard } from '@components/marketplace';
 import addresses from '@lib/contracts/addresses.json';
 
 export default function NFTDetail() {
   const { tokenId } = useParams<{ tokenId: string }>();
   const { address } = useAccount();
   const { getNFT } = useNFTRegistry();
-  const { buyNFT, createListing, isLoading: marketplaceLoading, getTokenListings } = useNFTMarketplace();
+  const { buyNFT, getTokenListings } = useNFTMarketplace();
   const { getActiveListings } = useNFTListings();
-  const { getAuction, getBidHistory, getMinBidIncrement } = useAuctionHouse();
+  const { getAuction, getBidHistory } = useAuctionHouse();
   const { getTokenOffers, acceptOffer, cancelOffer, getOffererOffers } = useOfferSystem();
   
   const [nft, setNft] = useState<any>(null);
@@ -247,7 +246,6 @@ export default function NFTDetail() {
                   <button
                     onClick={async () => {
                       const auctionData = await getAuction(listing.listingId);
-                      const minBidIncrement = await getMinBidIncrement();
                       setSelectedListing(listing);
                       setAuction(auctionData || {
                         listingId: listing.listingId,
@@ -304,7 +302,6 @@ export default function NFTDetail() {
               const auctionListing = listings.find((l) => l.listingType === ListingType.AUCTION);
               if (auctionListing) {
                 const usdtAddress = addresses.contracts.MockUSDT as `0x${string}`;
-                const platformTokenAddress = addresses.contracts.MockPlatformToken as `0x${string}`;
                 const isUSDT = auctionListing.paymentToken.toLowerCase() === usdtAddress.toLowerCase();
                 const decimals = isUSDT ? 6 : 18;
                 const symbol = isUSDT ? 'USDT' : 'PLATFORM';
@@ -404,7 +401,6 @@ export default function NFTDetail() {
                     <div className="text-lg sm:text-xl font-bold text-white mb-1">
                       {(() => {
                         const usdtAddress = (addresses.contracts as any).MockUSDT?.toLowerCase();
-                        const platformTokenAddress = (addresses.contracts as any).MockPlatformToken?.toLowerCase();
                         const paymentTokenLower = offer.paymentToken.toLowerCase();
                         const isUSDT = usdtAddress && paymentTokenLower === usdtAddress.toLowerCase();
                         const decimals = isUSDT ? 6 : 18;
@@ -452,7 +448,6 @@ export default function NFTDetail() {
                     <div className="text-lg sm:text-xl font-bold text-white mb-1">
                       {(() => {
                         const usdtAddress = (addresses.contracts as any).MockUSDT?.toLowerCase();
-                        const platformTokenAddress = (addresses.contracts as any).MockPlatformToken?.toLowerCase();
                         const paymentTokenLower = offer.paymentToken.toLowerCase();
                         const isUSDT = usdtAddress && paymentTokenLower === usdtAddress.toLowerCase();
                         const decimals = isUSDT ? 6 : 18;

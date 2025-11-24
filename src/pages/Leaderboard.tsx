@@ -221,7 +221,7 @@ export default function Leaderboard() {
                     <span className="text-sm sm:text-base text-slate-400">Average per Game</span>
                     <span className="text-sm sm:text-base font-semibold text-white">
                       {Number(totalGames) > 0
-                        ? Number(formatUnits(totalWinnings, USDT_DECIMALS) / Number(totalGames)).toLocaleString(
+                        ? (Number(formatUnits(totalWinnings, USDT_DECIMALS)) / Number(totalGames)).toLocaleString(
                             undefined,
                             { maximumFractionDigits: 2 }
                           )

@@ -24,7 +24,9 @@ export default function MyNFTs() {
     address: diceGameAddress,
     abi: diceGameAbi,
     functionName: 'gameType',
-    enabled: !!diceGameAddress,
+    query: {
+      enabled: !!diceGameAddress,
+    },
   });
 
   // Calculate DICE gameType: keccak256("DICE")
@@ -163,7 +165,7 @@ export default function MyNFTs() {
       )}
 
       {/* Create Listing Modal */}
-      {selectedTokenId && (
+      {selectedTokenId !== null && (
         <CreateListingModal
           isOpen={showCreateListing}
           onClose={() => {

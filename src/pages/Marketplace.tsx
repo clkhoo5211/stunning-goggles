@@ -9,7 +9,7 @@ import addresses from '@lib/contracts/addresses.json';
 export default function Marketplace() {
   const { address } = useAccount();
   const publicClient = usePublicClient();
-  const { getListing, buyNFT, cancelListing, isLoading: marketplaceLoading } = useNFTMarketplace();
+  const { buyNFT, cancelListing } = useNFTMarketplace();
   const { getAuction, getMinBidIncrement } = useAuctionHouse();
   const [listings, setListings] = useState<NFTListing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +26,9 @@ export default function Marketplace() {
     address: marketplaceAddress,
     abi: nftMarketplaceAbi,
     functionName: 'nextListingId',
-    enabled: !!marketplaceAddress,
+    query: {
+      enabled: !!marketplaceAddress,
+    },
   });
 
   useEffect(() => {

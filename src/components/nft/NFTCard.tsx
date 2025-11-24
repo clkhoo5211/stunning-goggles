@@ -1,4 +1,3 @@
-import { formatUnits } from 'viem';
 import { GameNFT } from '@hooks/useNFTRegistry';
 import { Link } from 'react-router-dom';
 

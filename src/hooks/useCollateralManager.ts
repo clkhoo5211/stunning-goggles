@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useAccount, usePublicClient } from 'wagmi';
 import { formatUnits } from 'viem';
 import { collateralManagerAbi } from '@lib/contracts/abi/collateralManager';
