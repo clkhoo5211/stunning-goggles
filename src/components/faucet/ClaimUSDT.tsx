@@ -13,7 +13,7 @@ interface ClaimUSDTProps {
 }
 
 export function ClaimUSDT({ className = '', compact = false }: ClaimUSDTProps) {
-  const { address, isConnected } = useAccount();
+  const { isConnected } = useAccount();
   const {
     claimMockUSDT,
     isPending,

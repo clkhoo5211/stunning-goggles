@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useAccount, useReadContract } from 'wagmi';
+import { useAccount } from 'wagmi';
 import { formatUnits, parseUnits } from 'viem';
 import { useLendingPool } from '@hooks/useLendingPool';
 import { useCollateralManager } from '@hooks/useCollateralManager';
 import { Modal } from '@components/ui/Modal';
-import addresses from '@lib/contracts/addresses.json';
 
 interface WithdrawCollateralModalProps {
   isOpen: boolean;
@@ -60,7 +59,7 @@ export function WithdrawCollateralModal({
         if (!cancelled && hf !== null) {
           setHealthFactor(hf);
         }
-      }).catch((error) => {
+      }).catch(() => {
         // Error fetching health factor - silently fail
       });
       return () => {

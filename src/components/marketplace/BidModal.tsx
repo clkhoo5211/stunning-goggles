@@ -53,7 +53,6 @@ export function BidModal({ isOpen, onClose, listing, auction, onSuccess }: BidMo
 
   // Get token addresses from config
   const usdtAddress = addresses.contracts.MockUSDT as `0x${string}`;
-  const platformTokenAddress = addresses.contracts.MockPlatformToken as `0x${string}`;
   
   const tokenDecimals = listing.paymentToken === usdtAddress ? 6 : 18;
   const tokenSymbol = listing.paymentToken === usdtAddress ? 'USDT' : 'PLATFORM';

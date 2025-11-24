@@ -15,7 +15,7 @@ interface RepayModalProps {
 
 export function RepayModal({ isOpen, onClose, onSuccess }: RepayModalProps) {
   const { address, isConnected } = useAccount();
-  const { repay, isLoading, platformTokenAddress, getUserLendingData, calculateInterest } = useLendingPool();
+  const { repay, isLoading, platformTokenAddress, getUserLendingData } = useLendingPool();
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
   const [amount, setAmount] = useState('');

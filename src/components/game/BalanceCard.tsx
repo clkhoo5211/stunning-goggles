@@ -32,7 +32,6 @@ export function BalanceCard({ showCard = true }: BalanceCardProps) {
     roundsPerPackage,
     costPerRound,
     minDepositAmount,
-    minWithdrawAmount,
     minWithdrawNet,
   } = useGameContract();
 

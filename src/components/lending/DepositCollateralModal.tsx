@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAccount, useReadContract, useWriteContract, usePublicClient, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount, useReadContract, useWriteContract, usePublicClient } from 'wagmi';
 import { formatUnits, parseUnits } from 'viem';
 import { toast } from 'sonner';
 import { useLendingPool } from '@hooks/useLendingPool';
@@ -96,7 +96,7 @@ export function DepositCollateralModal({ isOpen, onClose, onSuccess }: DepositCo
             setCollateralFactor(0);
           }
         }
-      }).catch((error) => {
+      }).catch(() => {
         if (!cancelled) {
           setCollateralFactor(0);
         }
