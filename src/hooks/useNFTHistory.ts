@@ -275,6 +275,11 @@ export function useNFTHistory() {
         setIsLoading(true);
         setError(null);
 
+        // Get current block and calculate a safe starting block (max 50,000 blocks back)
+        const currentBlock = await publicClient.getBlockNumber();
+        const maxBlockRange = 50000n;
+        const fromBlock = currentBlock > maxBlockRange ? currentBlock - maxBlockRange : 0n;
+
         // Fetch marketplace events
         const marketplaceEvents = ['ListingCreated', 'NFTPurchased', 'ListingCancelled'] as const;
         const marketplaceLogs = await Promise.all(
@@ -283,7 +288,7 @@ export function useNFTHistory() {
               address: marketplaceAddress,
               abi: nftMarketplaceAbi,
               eventName,
-              fromBlock: 0n,
+              fromBlock,
             }).catch(() => [])
           )
         );
@@ -296,7 +301,7 @@ export function useNFTHistory() {
               address: auctionHouseAddress,
               abi: auctionHouseAbi,
               eventName,
-              fromBlock: 0n,
+              fromBlock,
             }).catch(() => [])
           )
         );
@@ -309,7 +314,7 @@ export function useNFTHistory() {
               address: offerSystemAddress,
               abi: offerSystemAbi,
               eventName,
-              fromBlock: 0n,
+              fromBlock,
             }).catch(() => [])
           )
         );

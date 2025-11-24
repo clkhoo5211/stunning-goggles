@@ -105,11 +105,16 @@ export function useGameHistory() {
         setIsLoading(true);
         setError(null);
 
+        // Get current block and calculate a safe starting block (max 50,000 blocks back)
+        const currentBlock = await publicClient.getBlockNumber();
+        const maxBlockRange = 50000n;
+        const fromBlock = currentBlock > maxBlockRange ? currentBlock - maxBlockRange : 0n;
+
         const logs = await publicClient.getContractEvents({
           address: loggerAddress,
           abi: activityLoggerAbi,
           eventName: 'ActivityLogged',
-          fromBlock: 0n,
+          fromBlock,
           ...(address ? { args: { player: address } as const } : {}),
         });
 

@@ -32,12 +32,17 @@ export function useProposals() {
       setIsLoading(true);
       console.log('[useProposals] Fetching proposals from:', governorAddress);
       try {
+        // Get current block and calculate a safe starting block (max 50,000 blocks back)
+        const currentBlock = await publicClient.getBlockNumber();
+        const maxBlockRange = 50000n;
+        const fromBlock = currentBlock > maxBlockRange ? currentBlock - maxBlockRange : 0n;
+
         // Use getContractEvents which automatically decodes using the ABI
         const logs = await publicClient.getContractEvents({
           address: governorAddress,
           abi: luckGovernorAbi,
           eventName: 'ProposalCreated',
-          fromBlock: 0n,
+          fromBlock,
         });
 
         console.log('[useProposals] Raw logs:', logs.length, logs);
