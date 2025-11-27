@@ -145,17 +145,30 @@ export function useTransactionHistory() {
         setIsLoading(true);
         setError(null);
 
+        // Get DiceGameExt address from DiceGame contract (ext is a public variable)
+        let diceGameExtAddress: `0x${string}` | undefined;
+        try {
+          // Use multicall or direct call to bypass TypeScript type checking issues
+          const result = await (publicClient as any).readContract({
+            address: diceGameAddress,
+            abi: diceGameAbi,
+            functionName: 'ext',
+          });
+          diceGameExtAddress = result as `0x${string}`;
+        } catch (error) {
+          console.warn('Could not get DiceGameExt address:', error);
+        }
+
         // Get current block and calculate a safe starting block (max 50,000 blocks back)
         const currentBlock = await publicClient.getBlockNumber();
         const maxBlockRange = 50000n;
         const fromBlock = currentBlock > maxBlockRange ? currentBlock - maxBlockRange : 0n;
 
         // Fetch events from both DiceGame and DiceGameExt contracts
-        // Note: Events are emitted from DiceGameExt, but also declared in DiceGame
-        // We'll query both to be safe
+        // Events are actually emitted from DiceGameExt, so we need to query both addresses
 
-        // Query DiceGame for events (DiceGameExt is a module, events are emitted from DiceGame)
-        const allLogs = await Promise.all(
+        // Query events from DiceGame address
+        const diceGameLogs = await Promise.all(
           eventNames.map((eventName) =>
             publicClient.getContractEvents({
               address: diceGameAddress,
@@ -166,6 +179,22 @@ export function useTransactionHistory() {
             }).catch(() => [])
           )
         );
+
+        // Query events from DiceGameExt address (where events are actually emitted)
+        const diceGameExtLogs = diceGameExtAddress ? await Promise.all(
+          eventNames.map((eventName) =>
+            publicClient.getContractEvents({
+              address: diceGameExtAddress,
+              abi: diceGameAbi,
+              eventName,
+              fromBlock,
+              ...(address ? { args: { player: address } as any } : {}),
+            }).catch(() => [])
+          )
+        ) : [];
+
+        // Combine logs from both contracts
+        const allLogs = [...diceGameLogs.flat(), ...diceGameExtLogs.flat()];
 
         // Parse all logs based on event type
         const parsedEntries: TransactionHistoryEntry[] = [];
@@ -216,57 +245,100 @@ export function useTransactionHistory() {
 
     fetchHistory();
 
-    // Watch for new events
-    const watchEvents = () => {
-      const watchers = eventNames.map((eventName) =>
-        publicClient.watchContractEvent({
+    // Watch for new events from both contracts
+    const watchEvents = async () => {
+      const watchers: (() => void)[] = [];
+      
+      // Get DiceGameExt address for watching
+      let diceGameExtAddress: `0x${string}` | undefined;
+      try {
+        // Use type casting to bypass TypeScript type checking issues
+        const result = await (publicClient as any).readContract({
           address: diceGameAddress,
           abi: diceGameAbi,
-          eventName,
-          ...(address ? { args: { player: address } as any } : {}),
-          onLogs: async (logs) => {
-            const parsed: TransactionHistoryEntry[] = [];
-            
-            for (const log of logs) {
-              let entry: TransactionHistoryEntry | null = null;
-              
-              if (log.eventName === 'Deposited') {
-                entry = await parseDepositedLog(log);
-              } else if (log.eventName === 'Withdrawn') {
-                entry = await parseWithdrawnLog(log);
-              } else if (log.eventName === 'RoundsPurchased') {
-                entry = await parseRoundsPurchasedLog(log);
-              } else if (log.eventName === 'PendingRewardClaimed') {
-                entry = await parsePendingRewardClaimedLog(log);
-              } else if (log.eventName === 'PendingRewardForfeited') {
-                entry = await parsePendingRewardForfeitedLog(log);
-              } else if (log.eventName === 'ClaimRefundApplied') {
-                entry = await parseClaimRefundAppliedLog(log);
-              }
-              
-              if (entry) {
-                parsed.push(entry);
-              }
-            }
+          functionName: 'ext',
+        });
+        diceGameExtAddress = result as `0x${string}`;
+      } catch (error) {
+        console.warn('Could not get DiceGameExt address for watching:', error);
+      }
 
-            setHistory((prev) => {
-              const existingKeys = new Set(prev.map((entry) => `${entry.txHash}-${entry.logIndex}`));
-              const merged = [
-                ...parsed.filter((entry) => !existingKeys.has(`${entry.txHash}-${entry.logIndex}`)),
-                ...prev,
-              ];
-              return merged.sort((a, b) => Number(b.blockNumber - a.blockNumber));
-            });
-          },
-        })
-      );
+      const handleLogs = async (logs: any[]) => {
+        const parsed: TransactionHistoryEntry[] = [];
+        
+        for (const log of logs) {
+          let entry: TransactionHistoryEntry | null = null;
+          
+          if (log.eventName === 'Deposited') {
+            entry = await parseDepositedLog(log);
+          } else if (log.eventName === 'Withdrawn') {
+            entry = await parseWithdrawnLog(log);
+          } else if (log.eventName === 'RoundsPurchased') {
+            entry = await parseRoundsPurchasedLog(log);
+          } else if (log.eventName === 'PendingRewardClaimed') {
+            entry = await parsePendingRewardClaimedLog(log);
+          } else if (log.eventName === 'PendingRewardForfeited') {
+            entry = await parsePendingRewardForfeitedLog(log);
+          } else if (log.eventName === 'ClaimRefundApplied') {
+            entry = await parseClaimRefundAppliedLog(log);
+          }
+          
+          if (entry) {
+            parsed.push(entry);
+          }
+        }
+
+        setHistory((prev) => {
+          const existingKeys = new Set(prev.map((entry) => `${entry.txHash}-${entry.logIndex}`));
+          const merged = [
+            ...parsed.filter((entry) => !existingKeys.has(`${entry.txHash}-${entry.logIndex}`)),
+            ...prev,
+          ];
+          return merged.sort((a, b) => Number(b.blockNumber - a.blockNumber));
+        });
+      };
+
+      // Watch DiceGame events
+      eventNames.forEach((eventName) => {
+        watchers.push(
+          publicClient.watchContractEvent({
+            address: diceGameAddress,
+            abi: diceGameAbi,
+            eventName,
+            ...(address ? { args: { player: address } as any } : {}),
+            onLogs: handleLogs,
+          })
+        );
+      });
+
+      // Watch DiceGameExt events (where events are actually emitted)
+      if (diceGameExtAddress) {
+        eventNames.forEach((eventName) => {
+          watchers.push(
+            publicClient.watchContractEvent({
+              address: diceGameExtAddress!,
+              abi: diceGameAbi,
+              eventName,
+              ...(address ? { args: { player: address } as any } : {}),
+              onLogs: handleLogs,
+            })
+          );
+        });
+      }
 
       return () => {
         watchers.forEach((w) => w());
       };
     };
 
-    unwatch = watchEvents();
+    // Set up event watchers
+    watchEvents().then((unwatchFn) => {
+      if (isMounted) {
+        unwatch = unwatchFn;
+      }
+    }).catch((error) => {
+      console.error('Failed to set up event watchers:', error);
+    });
 
     return () => {
       isMounted = false;
