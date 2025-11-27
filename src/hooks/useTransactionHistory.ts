@@ -33,6 +33,12 @@ export function useTransactionHistory() {
     [],
   );
 
+  // Get DiceGameExt address directly from addresses.json (now available)
+  const diceGameExtAddress = useMemo(
+    () => (addresses.contracts.DiceGameExt as `0x${string}`) || undefined,
+    [],
+  );
+
   useEffect(() => {
     if (!address || !publicClient || !diceGameAddress) {
       setHistory([]);
@@ -145,18 +151,23 @@ export function useTransactionHistory() {
         setIsLoading(true);
         setError(null);
 
-        // Get DiceGameExt address from DiceGame contract (ext is a public variable)
-        let diceGameExtAddress: `0x${string}` | undefined;
-        try {
-          // Use multicall or direct call to bypass TypeScript type checking issues
-          const result = await (publicClient as any).readContract({
-            address: diceGameAddress,
-            abi: diceGameAbi,
-            functionName: 'ext',
-          });
-          diceGameExtAddress = result as `0x${string}`;
-        } catch (error) {
-          console.warn('Could not get DiceGameExt address:', error);
+        // Use DiceGameExt address from addresses.json (preferred) or fallback to reading from contract
+        let extAddress: `0x${string}` | undefined = diceGameExtAddress;
+        
+        // Fallback: Try to read from contract if not in addresses.json
+        if (!extAddress) {
+          try {
+            // Note: ext is a public state variable, may not be in ABI as a function
+            // If this fails, DiceGameExt should be added to addresses.json
+            const result = await (publicClient as any).readContract({
+              address: diceGameAddress,
+              abi: diceGameAbi,
+              functionName: 'ext',
+            });
+            extAddress = result as `0x${string}`;
+          } catch (error) {
+            console.warn('Could not get DiceGameExt address from contract. Ensure DiceGameExt is in addresses.json:', error);
+          }
         }
 
         // Get current block and calculate a safe starting block (max 50,000 blocks back)
@@ -181,10 +192,10 @@ export function useTransactionHistory() {
         );
 
         // Query events from DiceGameExt address (where events are actually emitted)
-        const diceGameExtLogs = diceGameExtAddress ? await Promise.all(
+        const diceGameExtLogs = extAddress ? await Promise.all(
           eventNames.map((eventName) =>
             publicClient.getContractEvents({
-              address: diceGameExtAddress,
+              address: extAddress,
               abi: diceGameAbi,
               eventName,
               fromBlock,
@@ -249,19 +260,8 @@ export function useTransactionHistory() {
     const watchEvents = async () => {
       const watchers: (() => void)[] = [];
       
-      // Get DiceGameExt address for watching
-      let diceGameExtAddress: `0x${string}` | undefined;
-      try {
-        // Use type casting to bypass TypeScript type checking issues
-        const result = await (publicClient as any).readContract({
-          address: diceGameAddress,
-          abi: diceGameAbi,
-          functionName: 'ext',
-        });
-        diceGameExtAddress = result as `0x${string}`;
-      } catch (error) {
-        console.warn('Could not get DiceGameExt address for watching:', error);
-      }
+      // Use DiceGameExt address from addresses.json (already available)
+      const extAddress = diceGameExtAddress;
 
       const handleLogs = async (logs: any[]) => {
         const parsed: TransactionHistoryEntry[] = [];
@@ -312,11 +312,11 @@ export function useTransactionHistory() {
       });
 
       // Watch DiceGameExt events (where events are actually emitted)
-      if (diceGameExtAddress) {
+      if (extAddress) {
         eventNames.forEach((eventName) => {
           watchers.push(
             publicClient.watchContractEvent({
-              address: diceGameExtAddress!,
+              address: extAddress,
               abi: diceGameAbi,
               eventName,
               ...(address ? { args: { player: address } as any } : {}),
@@ -344,7 +344,7 @@ export function useTransactionHistory() {
       isMounted = false;
       unwatch?.();
     };
-  }, [address, publicClient, diceGameAddress]);
+  }, [address, publicClient, diceGameAddress, diceGameExtAddress]);
 
   return {
     history,
