@@ -619,6 +619,40 @@ export function useGameContract() {
     }
     claimInFlightRef.current = true;
     try {
+      // Validate state before attempting claim
+      if (publicClient && address && playerStorageAddress) {
+        try {
+          const [currentState] = await publicClient.readContract({
+            address: playerStorageAddress,
+            abi: playerStorageAbi,
+            functionName: 'getPlayer',
+            args: [address],
+          });
+          
+          if (!currentState.pendingRewardActive) {
+            throw new Error('No pending reward to claim. The reward may have already been claimed or expired.');
+          }
+          
+          // Check if deadline has expired - claimReward requires deadline to be valid
+          if (currentState.decisionDeadline > 0n) {
+            const currentBlock = await publicClient.getBlockNumber();
+            const currentBlockTime = (await publicClient.getBlock({ blockNumber: currentBlock })).timestamp;
+            
+            if (currentBlockTime > currentState.decisionDeadline) {
+              throw new Error('The decision deadline has expired. Please forfeit the reward instead.');
+            }
+          }
+        } catch (readError: any) {
+          // If it's a validation error, throw it
+          if (readError.message && (readError.message.includes('No pending reward') || readError.message.includes('deadline has expired'))) {
+            throw readError;
+          }
+          // If we can't read the state, proceed anyway (might be a network issue)
+          // The contract will revert with a clear error message
+          console.warn('Could not validate claim state:', readError);
+        }
+      }
+      
       // Let the wallet/provider estimate gas automatically - don't force a gas limit
       const hash = await writeContractAsync({
         address: diceGameAddress,
