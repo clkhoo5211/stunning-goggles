@@ -517,6 +517,7 @@ export function useGameContract() {
         abi: diceGameAbi,
         functionName: 'forfeitReward', // New function name
         args: [],
+        gas: 300000n, // ForfeitReward: resolvePending + setPlayer (~200k typical, 300k safe)
       });
     } finally {
       forfeitInFlightRef.current = false;
