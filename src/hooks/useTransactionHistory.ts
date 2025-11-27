@@ -33,10 +33,6 @@ export function useTransactionHistory() {
     [],
   );
 
-  // DiceGameExt is a module used internally by DiceGame, events are emitted from DiceGame
-  // Use DiceGame address for event queries
-  const diceGameExtAddress = diceGameAddress;
-
   useEffect(() => {
     if (!address || !publicClient || !diceGameAddress) {
       setHistory([]);
