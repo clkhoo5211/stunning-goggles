@@ -382,6 +382,7 @@ export function useGameContract() {
       abi: diceGameAbi,
       functionName: 'deposit',
       args: [amountWei],
+      gas: 500000n, // Deposit: transferFrom + doDeposit + setPlayer + transfer fee + notifyExternalCredit (~200-300k typical, 500k safe)
     });
   };
 
@@ -393,6 +394,7 @@ export function useGameContract() {
       abi: diceGameAbi,
       functionName: 'buyRounds',
       args: [BigInt(numRounds)],
+      gas: 400000n, // BuyRounds: doBuyRounds + setPlayer + approve + addContribution (~250-350k typical, 400k safe)
     });
       console.log('[buyRounds] Success:', result);
       return result;
@@ -496,6 +498,7 @@ export function useGameContract() {
         abi: diceGameAbi,
         functionName: 'claimReward', // New function name
         args: [],
+        gas: 300000n, // ClaimReward: resolvePending + payWinnings + setPlayer (~200k typical, 300k safe)
       });
     } finally {
       claimInFlightRef.current = false;
@@ -529,6 +532,7 @@ export function useGameContract() {
       abi: diceGameAbi,
       functionName: 'withdraw',
       args: [amountWei],
+      gas: 500000n, // Withdraw: doWithdraw + setPlayer + transfers + payWinnings (~300-400k typical, 500k safe)
     });
   };
 
