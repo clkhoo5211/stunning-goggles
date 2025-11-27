@@ -33,13 +33,12 @@ export function useTransactionHistory() {
     [],
   );
 
-  const diceGameExtAddress = useMemo(
-    () => addresses.contracts.DiceGameExt as `0x${string}`,
-    [],
-  );
+  // DiceGameExt is a module used internally by DiceGame, events are emitted from DiceGame
+  // Use DiceGame address for event queries
+  const diceGameExtAddress = diceGameAddress;
 
   useEffect(() => {
-    if (!address || !publicClient || !diceGameAddress || !diceGameExtAddress) {
+    if (!address || !publicClient || !diceGameAddress) {
       setHistory([]);
       return;
     }
@@ -159,19 +158,9 @@ export function useTransactionHistory() {
         // Note: Events are emitted from DiceGameExt, but also declared in DiceGame
         // We'll query both to be safe
 
-        const allLogs = await Promise.all([
-          // Query DiceGameExt for events (where they're actually emitted)
-          ...eventNames.map((eventName) =>
-            publicClient.getContractEvents({
-              address: diceGameExtAddress,
-              abi: diceGameAbi,
-              eventName,
-              fromBlock,
-              ...(address ? { args: { player: address } as any } : {}),
-            }).catch(() => [])
-          ),
-          // Also query DiceGame as fallback (events are declared there too)
-          ...eventNames.map((eventName) =>
+        // Query DiceGame for events (DiceGameExt is a module, events are emitted from DiceGame)
+        const allLogs = await Promise.all(
+          eventNames.map((eventName) =>
             publicClient.getContractEvents({
               address: diceGameAddress,
               abi: diceGameAbi,
@@ -179,8 +168,8 @@ export function useTransactionHistory() {
               fromBlock,
               ...(address ? { args: { player: address } as any } : {}),
             }).catch(() => [])
-          ),
-        ]);
+          )
+        );
 
         // Parse all logs based on event type
         const parsedEntries: TransactionHistoryEntry[] = [];
@@ -235,7 +224,7 @@ export function useTransactionHistory() {
     const watchEvents = () => {
       const watchers = eventNames.map((eventName) =>
         publicClient.watchContractEvent({
-          address: diceGameExtAddress,
+          address: diceGameAddress,
           abi: diceGameAbi,
           eventName,
           ...(address ? { args: { player: address } as any } : {}),
@@ -287,7 +276,7 @@ export function useTransactionHistory() {
       isMounted = false;
       unwatch?.();
     };
-  }, [address, publicClient, diceGameAddress, diceGameExtAddress]);
+  }, [address, publicClient, diceGameAddress]);
 
   return {
     history,

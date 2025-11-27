@@ -162,16 +162,9 @@ export function useGameContract() {
     functionName: 'getAllPayouts',
   });
 
-  // Read dynamically adjusted cell payouts from DiceGame (applies boost + safety scaling)
-  const { data: rawAdjustedPayouts } = useReadContract({
-    address: diceGameAddress,
-    abi: diceGameAbi,
-    functionName: 'getAllAdjustedPayouts' as const,
-    query: {
-      refetchInterval: 5000, // Refetch every 5 seconds to update with pool changes
-      refetchOnWindowFocus: true,
-    },
-  });
+  // Note: getAllAdjustedPayouts doesn't exist in DiceGame contract
+  // Adjusted payouts are calculated locally using base payouts + boost + safety scaling
+  const rawAdjustedPayouts = undefined;
 
   const { data: rawPrizePoolBalance } = useReadContract({
     address: prizePoolAddress,
@@ -222,7 +215,7 @@ export function useGameContract() {
     },
   });
 
-  const { data: rawRoundsPerPackage, isLoading: isLoadingRoundsPerPackage, error: roundsPerPackageError } = useReadContract({
+  const { data: rawRoundsPerPackage, error: roundsPerPackageError } = useReadContract({
     address: addresses.contracts.GameConfigModule as `0x${string}`,
     abi: gameconfigmoduleAbi,
     functionName: 'getRoundsPerPackage' as const,
