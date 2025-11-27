@@ -582,13 +582,20 @@ export function useGameContract() {
         1500000n // Fallback: Play can vary significantly due to reroll logic
       );
       
-      return await writeContractAsync({
+      const hash = await writeContractAsync({
         address: diceGameAddress,
         abi: diceGameAbi,
         functionName: 'play',
         args: [gameParams, seed],
         gas: gasLimit,
       });
+      
+      // Wait for transaction confirmation
+      if (publicClient && hash) {
+        await publicClient.waitForTransactionReceipt({ hash, timeout: 60000 });
+      }
+      
+      return hash;
     } catch (error: any) {
       console.error('[playRound] Transaction failed:', error);
       console.error('[playRound] Error details:', {

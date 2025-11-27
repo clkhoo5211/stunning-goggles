@@ -7,6 +7,7 @@ import { useAccount } from 'wagmi';
 import { BalanceCardView } from '@components/ui/balance-card/BalanceCardView';
 import { DepositModal } from '@components/ui/balance-card/DepositModal';
 import { WithdrawModal } from '@components/ui/balance-card/WithdrawModal';
+import { TransactionLoadingOverlay } from '@components/ui/TransactionLoadingOverlay';
 
 interface BalanceCardProps {
   /** When false, render only the modals/listeners (no visible balance card) */
@@ -43,6 +44,8 @@ export function BalanceCard({ showCard = true }: BalanceCardProps) {
   const [depositAmount, setDepositAmount] = useState('1000');
   const [withdrawAmount, setWithdrawAmount] = useState('0');
   const [approvalCountdown, setApprovalCountdown] = useState(0);
+  const [isTransactionPending, setIsTransactionPending] = useState(false);
+  const [transactionMessage, setTransactionMessage] = useState<string>('');
 
   const handleDepositAmountChange = (value: string) => {
     const sanitized = value.replace(/[^0-9.]/g, '');
@@ -188,6 +191,8 @@ export function BalanceCard({ showCard = true }: BalanceCardProps) {
 
     try {
       setIsProcessing(true);
+      setIsTransactionPending(true);
+      setTransactionMessage(`Approving ${tokenSymbol}...`);
       const approveToast = toast.loading(`Approving ${tokenSymbol}...`);
       await approveDepositToken(depositAmount);
       toast.success(`${tokenSymbol} approved! Waiting for confirmation…`, { id: approveToast });
@@ -200,6 +205,8 @@ export function BalanceCard({ showCard = true }: BalanceCardProps) {
     } finally {
       toast.dismiss();
       setIsProcessing(false);
+      setIsTransactionPending(false);
+      setTransactionMessage('');
     }
   };
 
@@ -237,7 +244,8 @@ export function BalanceCard({ showCard = true }: BalanceCardProps) {
 
     try {
       setIsProcessing(true);
-
+      setIsTransactionPending(true);
+      setTransactionMessage(`Depositing ${numericAmount} ${tokenSymbol}...`);
       const depositToast = toast.loading(`Depositing ${numericAmount} ${tokenSymbol}...`);
       await deposit(depositAmount);
       playSound('deposit');
@@ -255,6 +263,8 @@ export function BalanceCard({ showCard = true }: BalanceCardProps) {
     } finally {
       toast.dismiss();
       setIsProcessing(false);
+      setIsTransactionPending(false);
+      setTransactionMessage('');
     }
   };
 
@@ -294,6 +304,8 @@ export function BalanceCard({ showCard = true }: BalanceCardProps) {
 
     try {
       setIsProcessing(true);
+      setIsTransactionPending(true);
+      setTransactionMessage(`Withdrawing ${numericAmount} ${tokenSymbol}...`);
       const withdrawToast = toast.loading(`Withdrawing ${numericAmount} ${tokenSymbol}...`);
       await withdraw(withdrawAmount);
       playSound('withdraw');
@@ -308,6 +320,8 @@ export function BalanceCard({ showCard = true }: BalanceCardProps) {
     } finally {
       toast.dismiss();
       setIsProcessing(false);
+      setIsTransactionPending(false);
+      setTransactionMessage('');
     }
   };
 
@@ -396,6 +410,12 @@ export function BalanceCard({ showCard = true }: BalanceCardProps) {
         feeBps={withdrawFeeBps ?? 0}
         onConfirm={handleWithdraw}
         tokenSymbol={tokenSymbol}
+      />
+      
+      {/* Global transaction loading overlay */}
+      <TransactionLoadingOverlay 
+        isVisible={isTransactionPending} 
+        message={transactionMessage}
       />
     </>
   );

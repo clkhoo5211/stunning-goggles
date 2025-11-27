@@ -14,6 +14,7 @@ import { HowToPlayModal } from '@components/game/HowToPlayModal';
 import { AnimatedNumber } from '@components/ui/animated-number';
 import { GameActionBar } from '@components/game/GameActionBar';
 import { BalanceCard } from '@components/game/BalanceCard';
+import { TransactionLoadingOverlay } from '@components/ui/TransactionLoadingOverlay';
 // const MIN_DISPLAY_PRECISION = 2; // Temporarily commented out with pending reward section
 
 const generateRandomDiceFaces = () =>
@@ -64,6 +65,8 @@ const DiceGame: React.FC = () => {
   const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
   const [isHowToPlayModalOpen, setIsHowToPlayModalOpen] = useState(false);
   const [isBuying, setIsBuying] = useState(false);
+  const [isTransactionPending, setIsTransactionPending] = useState(false);
+  const [transactionMessage, setTransactionMessage] = useState<string>('');
   const [decisionCountdown, setDecisionCountdown] = useState<number>(0);
   const [decisionDeadline, setDecisionDeadline] = useState<number | null>(null);
   const [userOverrideDirection, setUserOverrideDirection] = useState(false);
@@ -236,6 +239,8 @@ const DiceGame: React.FC = () => {
 
     try {
       setIsBuying(true);
+      setIsTransactionPending(true);
+      setTransactionMessage(`Purchasing new ${roundsToBuy}-round session (${sessionCost.toLocaleString()} USDT)...`);
       playSound('buy_session');
       const toastId = toast.loading(
         `Purchasing new ${roundsToBuy}-round session (${sessionCost.toLocaleString()} USDT)...`
@@ -285,6 +290,8 @@ const DiceGame: React.FC = () => {
       }
     } finally {
       setIsBuying(false);
+      setIsTransactionPending(false);
+      setTransactionMessage('');
     }
   };
 
@@ -335,6 +342,8 @@ const DiceGame: React.FC = () => {
 
     try {
       setIsRolling(true);
+      setIsTransactionPending(true);
+      setTransactionMessage('Rolling dice...');
       playSound('roll');
       const toastId = toast.loading('Rolling dice...');
 
@@ -369,6 +378,8 @@ const DiceGame: React.FC = () => {
         clearInterval(rollInterval);
       }
       setIsRolling(false);
+      setIsTransactionPending(false);
+      setTransactionMessage('');
     }
   };
 
@@ -379,6 +390,8 @@ const DiceGame: React.FC = () => {
     }
 
     try {
+      setIsTransactionPending(true);
+      setTransactionMessage('Claiming reward and ending session...');
       playSound('claim');
       await toast.promise(claimPendingReward(), {
         loading: 'Claiming reward and ending session...',
@@ -391,6 +404,8 @@ const DiceGame: React.FC = () => {
       toast.error(getReadableErrorMessage(error));
     } finally {
       setPendingExpiredLocally(false);
+      setIsTransactionPending(false);
+      setTransactionMessage('');
     }
   };
 
@@ -401,6 +416,8 @@ const DiceGame: React.FC = () => {
     }
 
     try {
+      setIsTransactionPending(true);
+      setTransactionMessage('Forfeiting reward and continuing session...');
       playSound('continue');
       await toast.promise(forfeitPendingReward(), {
         loading: 'Forfeiting reward and continuing session...',
@@ -413,6 +430,8 @@ const DiceGame: React.FC = () => {
       toast.error(getReadableErrorMessage(error));
     } finally {
       setPendingExpiredLocally(false);
+      setIsTransactionPending(false);
+      setTransactionMessage('');
     }
   };
 
@@ -700,6 +719,12 @@ const DiceGame: React.FC = () => {
         canRoll={Boolean(roundsRemaining) && !resolvingPending && !hasPendingReward}
         canBuySession={canAffordSession && !hasPendingReward && !(playerState?.hasActiveSession && roundsRemaining > 0)}
         disabled={isRolling}
+      />
+      
+      {/* Global transaction loading overlay */}
+      <TransactionLoadingOverlay 
+        isVisible={isTransactionPending} 
+        message={transactionMessage}
       />
     </div>
   );
