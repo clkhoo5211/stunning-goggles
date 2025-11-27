@@ -71,6 +71,43 @@ const applySafetyScaling = (
   return (amount * scaleBps * recoveryBps) / (10000 * 10000);
 };
 
+/**
+ * Helper function to estimate gas with a safety buffer
+ * Adds 30% buffer to the estimate to account for network fluctuations
+ */
+async function estimateGasWithBuffer(
+  publicClient: any,
+  address: `0x${string}` | undefined,
+  contractConfig: {
+    address: `0x${string}`;
+    abi: any;
+    functionName: string;
+    args: any[];
+  },
+  fallbackGas: bigint
+): Promise<bigint> {
+  if (!publicClient || !address) {
+    return fallbackGas;
+  }
+
+  try {
+    const estimatedGas = await publicClient.estimateGas({
+      account: address,
+      ...contractConfig,
+    });
+    
+    // Add 30% buffer for safety
+    const bufferedGas = (estimatedGas * 130n) / 100n;
+    
+    // Ensure we don't exceed the fallback (as a maximum cap)
+    return bufferedGas > fallbackGas ? fallbackGas : bufferedGas;
+  } catch (error) {
+    // If estimation fails, use fallback
+    console.warn('Gas estimation failed, using fallback:', error);
+    return fallbackGas;
+  }
+}
+
 export function useGameContract() {
   const { address } = useAccount();
   const { writeContractAsync } = useWriteContract();
@@ -366,36 +403,70 @@ export function useGameContract() {
   // Write functions
   const approveDepositToken = async (amount: string) => {
     const amountWei = parseUnits(amount, 6);
-    return writeContractAsync({
+    const contractConfig = {
       address: depositTokenAddress,
       abi: erc20Abi,
-      functionName: 'approve',
+      functionName: 'approve' as const,
       args: [diceGameAddress, amountWei],
-      gas: 100000n, // ERC20 approve typically needs ~46k gas, 100k is safe
+    };
+    
+    // For approve, we can use a smaller buffer since it's a simple operation
+    const gasLimit = await estimateGasWithBuffer(
+      publicClient,
+      address,
+      contractConfig,
+      100000n // Fallback: ERC20 approve typically needs ~46k gas
+    );
+    
+    return writeContractAsync({
+      ...contractConfig,
+      gas: gasLimit,
     });
   };
 
   const deposit = async (amount: string) => {
     const amountWei = parseUnits(amount, 6); // USDT has 6 decimals
-    return writeContractAsync({
+    const contractConfig = {
       address: diceGameAddress,
       abi: diceGameAbi,
-      functionName: 'deposit',
+      functionName: 'deposit' as const,
       args: [amountWei],
-      gas: 500000n, // Deposit: transferFrom + doDeposit + setPlayer + transfer fee + notifyExternalCredit (~200-300k typical, 500k safe)
+    };
+    
+    const gasLimit = await estimateGasWithBuffer(
+      publicClient,
+      address,
+      contractConfig,
+      600000n // Fallback: Deposit typically needs ~290-500k gas
+    );
+    
+    return writeContractAsync({
+      ...contractConfig,
+      gas: gasLimit,
     });
   };
 
   const buyRounds = async (numRounds: number) => {
     console.log('[buyRounds] Calling with numRounds:', numRounds);
     try {
+      const contractConfig = {
+        address: diceGameAddress,
+        abi: diceGameAbi,
+        functionName: 'buyRounds' as const,
+        args: [BigInt(numRounds)],
+      };
+      
+      const gasLimit = await estimateGasWithBuffer(
+        publicClient,
+        address,
+        contractConfig,
+        500000n // Fallback: BuyRounds typically needs ~250-400k gas
+      );
+      
       const result = await writeContractAsync({
-      address: diceGameAddress,
-      abi: diceGameAbi,
-      functionName: 'buyRounds',
-      args: [BigInt(numRounds)],
-      gas: 400000n, // BuyRounds: doBuyRounds + setPlayer + approve + addContribution (~250-350k typical, 400k safe)
-    });
+        ...contractConfig,
+        gas: gasLimit,
+      });
       console.log('[buyRounds] Success:', result);
       return result;
     } catch (error: any) {
@@ -464,12 +535,24 @@ export function useGameContract() {
         }
       }
 
-      return await writeContractAsync({
+      const contractConfig = {
         address: diceGameAddress,
         abi: diceGameAbi,
-        functionName: 'play',
+        functionName: 'play' as const,
         args: [gameParams, seed],
-        gas: 1500000n, // Manual override to prevent gas estimation failures due to reroll loop
+      };
+      
+      // For play(), we use a higher fallback due to potential reroll loops
+      const gasLimit = await estimateGasWithBuffer(
+        publicClient,
+        address,
+        contractConfig,
+        1500000n // Fallback: Play can vary significantly due to reroll logic
+      );
+      
+      return await writeContractAsync({
+        ...contractConfig,
+        gas: gasLimit,
       });
     } catch (error: any) {
       console.error('[playRound] Transaction failed:', error);
@@ -493,12 +576,23 @@ export function useGameContract() {
     }
     claimInFlightRef.current = true;
     try {
-      return await writeContractAsync({
+      const contractConfig = {
         address: diceGameAddress,
         abi: diceGameAbi,
-        functionName: 'claimReward', // New function name
+        functionName: 'claimReward' as const,
         args: [],
-        gas: 300000n, // ClaimReward: resolvePending + payWinnings + setPlayer (~200k typical, 300k safe)
+      };
+      
+      const gasLimit = await estimateGasWithBuffer(
+        publicClient,
+        address,
+        contractConfig,
+        400000n // Fallback: ClaimReward typically needs ~200-350k gas
+      );
+      
+      return await writeContractAsync({
+        ...contractConfig,
+        gas: gasLimit,
       });
     } finally {
       claimInFlightRef.current = false;
@@ -512,12 +606,23 @@ export function useGameContract() {
     }
     forfeitInFlightRef.current = true;
     try {
-      return await writeContractAsync({
+      const contractConfig = {
         address: diceGameAddress,
         abi: diceGameAbi,
-        functionName: 'forfeitReward', // New function name
+        functionName: 'forfeitReward' as const,
         args: [],
-        gas: 300000n, // ForfeitReward: resolvePending + setPlayer (~200k typical, 300k safe)
+      };
+      
+      const gasLimit = await estimateGasWithBuffer(
+        publicClient,
+        address,
+        contractConfig,
+        400000n // Fallback: ForfeitReward typically needs ~200-350k gas
+      );
+      
+      return await writeContractAsync({
+        ...contractConfig,
+        gas: gasLimit,
       });
     } finally {
       forfeitInFlightRef.current = false;
@@ -528,12 +633,23 @@ export function useGameContract() {
     // Primary withdrawal function - withdraws from both deposits and winnings
     // Uses winnings first, then deposits, and applies 0.5% fee
     const amountWei = parseUnits(netAmount, 6);
-    return writeContractAsync({
+    const contractConfig = {
       address: diceGameAddress,
       abi: diceGameAbi,
-      functionName: 'withdraw',
+      functionName: 'withdraw' as const,
       args: [amountWei],
-      gas: 500000n, // Withdraw: doWithdraw + setPlayer + transfers + payWinnings (~300-400k typical, 500k safe)
+    };
+    
+    const gasLimit = await estimateGasWithBuffer(
+      publicClient,
+      address,
+      contractConfig,
+      600000n // Fallback: Withdraw typically needs ~300-500k gas
+    );
+    
+    return writeContractAsync({
+      ...contractConfig,
+      gas: gasLimit,
     });
   };
 
