@@ -82,7 +82,7 @@ async function estimateGasWithBuffer(
     address: `0x${string}`;
     abi: any;
     functionName: string;
-    args: any[];
+    args: readonly any[] | any[];
   },
   fallbackGas: bigint
 ): Promise<bigint> {
@@ -93,7 +93,10 @@ async function estimateGasWithBuffer(
   try {
     const estimatedGas = await publicClient.estimateGas({
       account: address,
-      ...contractConfig,
+      address: contractConfig.address,
+      abi: contractConfig.abi,
+      functionName: contractConfig.functionName,
+      args: contractConfig.args as any[],
     });
     
     // Add 30% buffer for safety
@@ -407,7 +410,7 @@ export function useGameContract() {
       address: depositTokenAddress,
       abi: erc20Abi,
       functionName: 'approve' as const,
-      args: [diceGameAddress, amountWei],
+      args: [diceGameAddress, amountWei] as const,
     };
     
     // For approve, we can use a smaller buffer since it's a simple operation
@@ -419,7 +422,10 @@ export function useGameContract() {
     );
     
     const hash = await writeContractAsync({
-      ...contractConfig,
+      address: depositTokenAddress,
+      abi: erc20Abi,
+      functionName: 'approve',
+      args: [diceGameAddress, amountWei],
       gas: gasLimit,
     });
     
@@ -437,7 +443,7 @@ export function useGameContract() {
       address: diceGameAddress,
       abi: diceGameAbi,
       functionName: 'deposit' as const,
-      args: [amountWei],
+      args: [amountWei] as const,
     };
     
     const gasLimit = await estimateGasWithBuffer(
@@ -448,7 +454,10 @@ export function useGameContract() {
     );
     
     const hash = await writeContractAsync({
-      ...contractConfig,
+      address: diceGameAddress,
+      abi: diceGameAbi,
+      functionName: 'deposit',
+      args: [amountWei],
       gas: gasLimit,
     });
     
@@ -467,7 +476,7 @@ export function useGameContract() {
         address: diceGameAddress,
         abi: diceGameAbi,
         functionName: 'buyRounds' as const,
-        args: [BigInt(numRounds)],
+        args: [BigInt(numRounds)] as const,
       };
       
       const gasLimit = await estimateGasWithBuffer(
@@ -478,7 +487,10 @@ export function useGameContract() {
       );
       
       const hash = await writeContractAsync({
-        ...contractConfig,
+        address: diceGameAddress,
+        abi: diceGameAbi,
+        functionName: 'buyRounds',
+        args: [BigInt(numRounds)],
         gas: gasLimit,
       });
       console.log('[buyRounds] Transaction hash:', hash);
@@ -559,7 +571,7 @@ export function useGameContract() {
         address: diceGameAddress,
         abi: diceGameAbi,
         functionName: 'play' as const,
-        args: [gameParams, seed],
+        args: [gameParams, seed] as const,
       };
       
       // For play(), we use a higher fallback due to potential reroll loops
@@ -571,7 +583,10 @@ export function useGameContract() {
       );
       
       return await writeContractAsync({
-        ...contractConfig,
+        address: diceGameAddress,
+        abi: diceGameAbi,
+        functionName: 'play',
+        args: [gameParams, seed],
         gas: gasLimit,
       });
     } catch (error: any) {
@@ -600,7 +615,7 @@ export function useGameContract() {
         address: diceGameAddress,
         abi: diceGameAbi,
         functionName: 'claimReward' as const,
-        args: [],
+        args: [] as const,
       };
       
       const gasLimit = await estimateGasWithBuffer(
@@ -611,7 +626,10 @@ export function useGameContract() {
       );
       
       const hash = await writeContractAsync({
-        ...contractConfig,
+        address: diceGameAddress,
+        abi: diceGameAbi,
+        functionName: 'claimReward',
+        args: [],
         gas: gasLimit,
       });
       
@@ -658,7 +676,7 @@ export function useGameContract() {
         address: diceGameAddress,
         abi: diceGameAbi,
         functionName: 'forfeitReward' as const,
-        args: [],
+        args: [] as const,
       };
       
       const gasLimit = await estimateGasWithBuffer(
@@ -669,7 +687,10 @@ export function useGameContract() {
       );
       
       const hash = await writeContractAsync({
-        ...contractConfig,
+        address: diceGameAddress,
+        abi: diceGameAbi,
+        functionName: 'forfeitReward',
+        args: [],
         gas: gasLimit,
       });
       
@@ -692,7 +713,7 @@ export function useGameContract() {
       address: diceGameAddress,
       abi: diceGameAbi,
       functionName: 'withdraw' as const,
-      args: [amountWei],
+      args: [amountWei] as const,
     };
     
     const gasLimit = await estimateGasWithBuffer(
@@ -703,7 +724,10 @@ export function useGameContract() {
     );
     
     const hash = await writeContractAsync({
-      ...contractConfig,
+      address: diceGameAddress,
+      abi: diceGameAbi,
+      functionName: 'withdraw',
+      args: [amountWei],
       gas: gasLimit,
     });
     
