@@ -418,10 +418,17 @@ export function useGameContract() {
       100000n // Fallback: ERC20 approve typically needs ~46k gas
     );
     
-    return writeContractAsync({
+    const hash = await writeContractAsync({
       ...contractConfig,
       gas: gasLimit,
     });
+    
+    // Wait for transaction confirmation
+    if (publicClient && hash) {
+      await publicClient.waitForTransactionReceipt({ hash, timeout: 60000 });
+    }
+    
+    return hash;
   };
 
   const deposit = async (amount: string) => {
@@ -440,10 +447,17 @@ export function useGameContract() {
       600000n // Fallback: Deposit typically needs ~290-500k gas
     );
     
-    return writeContractAsync({
+    const hash = await writeContractAsync({
       ...contractConfig,
       gas: gasLimit,
     });
+    
+    // Wait for transaction confirmation
+    if (publicClient && hash) {
+      await publicClient.waitForTransactionReceipt({ hash, timeout: 60000 });
+    }
+    
+    return hash;
   };
 
   const buyRounds = async (numRounds: number) => {
@@ -463,12 +477,18 @@ export function useGameContract() {
         500000n // Fallback: BuyRounds typically needs ~250-400k gas
       );
       
-      const result = await writeContractAsync({
+      const hash = await writeContractAsync({
         ...contractConfig,
         gas: gasLimit,
       });
-      console.log('[buyRounds] Success:', result);
-      return result;
+      console.log('[buyRounds] Transaction hash:', hash);
+      
+      // Wait for transaction confirmation
+      if (publicClient && hash) {
+        await publicClient.waitForTransactionReceipt({ hash, timeout: 60000 });
+      }
+      
+      return hash;
     } catch (error: any) {
       console.error('[buyRounds] Error details:', {
         error,
@@ -590,10 +610,17 @@ export function useGameContract() {
         400000n // Fallback: ClaimReward typically needs ~200-350k gas
       );
       
-      return await writeContractAsync({
+      const hash = await writeContractAsync({
         ...contractConfig,
         gas: gasLimit,
       });
+      
+      // Wait for transaction confirmation
+      if (publicClient && hash) {
+        await publicClient.waitForTransactionReceipt({ hash, timeout: 60000 });
+      }
+      
+      return hash;
     } finally {
       claimInFlightRef.current = false;
     }
@@ -620,10 +647,17 @@ export function useGameContract() {
         400000n // Fallback: ForfeitReward typically needs ~200-350k gas
       );
       
-      return await writeContractAsync({
+      const hash = await writeContractAsync({
         ...contractConfig,
         gas: gasLimit,
       });
+      
+      // Wait for transaction confirmation
+      if (publicClient && hash) {
+        await publicClient.waitForTransactionReceipt({ hash, timeout: 60000 });
+      }
+      
+      return hash;
     } finally {
       forfeitInFlightRef.current = false;
     }
@@ -647,10 +681,17 @@ export function useGameContract() {
       600000n // Fallback: Withdraw typically needs ~300-500k gas
     );
     
-    return writeContractAsync({
+    const hash = await writeContractAsync({
       ...contractConfig,
       gas: gasLimit,
     });
+    
+    // Wait for transaction confirmation
+    if (publicClient && hash) {
+      await publicClient.waitForTransactionReceipt({ hash, timeout: 60000 });
+    }
+    
+    return hash;
   };
 
   // Format player state for easier use
