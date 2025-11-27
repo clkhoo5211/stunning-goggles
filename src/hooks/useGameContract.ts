@@ -633,6 +633,27 @@ export function useGameContract() {
     }
     forfeitInFlightRef.current = true;
     try {
+      // Validate that there's actually a pending reward before calling the contract
+      // This prevents unnecessary failed transactions due to stale state
+      if (publicClient && address && playerStorageAddress) {
+        try {
+          const [currentState] = await publicClient.readContract({
+            address: playerStorageAddress,
+            abi: playerStorageAbi,
+            functionName: 'getPlayer',
+            args: [address],
+          });
+          
+          if (!currentState.pendingRewardActive) {
+            throw new Error('No pending reward to forfeit. The reward may have already been claimed or expired.');
+          }
+        } catch (readError: any) {
+          // If we can't read the state, proceed anyway (might be a network issue)
+          // The contract will revert with a clear error message
+          console.warn('Could not validate pending reward state:', readError);
+        }
+      }
+      
       const contractConfig = {
         address: diceGameAddress,
         abi: diceGameAbi,
