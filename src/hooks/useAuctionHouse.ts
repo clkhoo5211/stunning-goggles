@@ -60,6 +60,7 @@ export function useAuctionHouse() {
           abi: erc20Abi,
           functionName: 'approve',
           args: [auctionHouseAddress, bidAmountWei],
+          gas: 100000n, // ERC20 approve typically needs ~46k gas, 100k is safe
         });
         toast.info('Approval submitted. Please wait...');
         await new Promise((resolve) => setTimeout(resolve, 3000));

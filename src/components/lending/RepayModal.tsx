@@ -280,6 +280,7 @@ export function RepayModal({ isOpen, onClose, onSuccess }: RepayModalProps) {
           abi: erc20Abi,
           functionName: 'approve',
           args: [lendingPoolAddress, amountWei],
+          gas: 100000n, // ERC20 approve typically needs ~46k gas, 100k is safe
         });
         
         // Wait for approval transaction to be mined

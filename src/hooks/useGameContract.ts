@@ -212,26 +212,32 @@ export function useGameContract() {
     },
   });
 
-  // Note: withdrawFeeBps, costPerRound, roundsPerPackage, minDepositAmount, minWithdrawNet
-  // may need to be read from GameConfigModule in the new architecture
-  // For now, we'll try to read from DiceGame or use defaults
+  // Read costPerRound and roundsPerPackage from GameConfigModule
   const { data: rawCostPerRound } = useReadContract({
     address: addresses.contracts.GameConfigModule as `0x${string}`,
-    abi: [], // Will need GameConfigModule ABI
+    abi: gameconfigmoduleAbi,
     functionName: 'getCostPerRound' as const,
     query: {
-      enabled: false, // Disable for now, will add GameConfigModule ABI later
+      enabled: !!addresses.contracts.GameConfigModule,
     },
   });
 
-  const { data: rawRoundsPerPackage } = useReadContract({
+  const { data: rawRoundsPerPackage, isLoading: isLoadingRoundsPerPackage, error: roundsPerPackageError } = useReadContract({
     address: addresses.contracts.GameConfigModule as `0x${string}`,
-    abi: [],
+    abi: gameconfigmoduleAbi,
     functionName: 'getRoundsPerPackage' as const,
     query: {
-      enabled: false,
+      enabled: !!addresses.contracts.GameConfigModule,
     },
   });
+
+  // Debug logging
+  if (rawRoundsPerPackage !== undefined) {
+    console.log('[useGameContract] rawRoundsPerPackage:', rawRoundsPerPackage, 'as number:', Number(rawRoundsPerPackage));
+  }
+  if (roundsPerPackageError) {
+    console.error('[useGameContract] Error fetching roundsPerPackage:', roundsPerPackageError);
+  }
 
   // Read from GameConfigModule
   const { data: rawWithdrawFeeBps } = useReadContract({
@@ -372,6 +378,7 @@ export function useGameContract() {
       abi: erc20Abi,
       functionName: 'approve',
       args: [diceGameAddress, amountWei],
+      gas: 100000n, // ERC20 approve typically needs ~46k gas, 100k is safe
     });
   };
 
@@ -386,12 +393,27 @@ export function useGameContract() {
   };
 
   const buyRounds = async (numRounds: number) => {
-    return writeContractAsync({
+    console.log('[buyRounds] Calling with numRounds:', numRounds);
+    try {
+      const result = await writeContractAsync({
       address: diceGameAddress,
       abi: diceGameAbi,
       functionName: 'buyRounds',
       args: [BigInt(numRounds)],
     });
+      console.log('[buyRounds] Success:', result);
+      return result;
+    } catch (error: any) {
+      console.error('[buyRounds] Error details:', {
+        error,
+        message: error?.message,
+        shortMessage: error?.shortMessage,
+        data: error?.data,
+        cause: error?.cause,
+        numRounds,
+      });
+      throw error;
+    }
   };
 
   const playRound = async (isClockwise: boolean) => {
@@ -505,36 +527,14 @@ export function useGameContract() {
     }
   };
 
-  const withdrawWinnings = async (amount?: string) => {
-    const amountWei = amount ? parseUnits(amount, 6) : BigInt(0);
-    return writeContractAsync({
-      address: diceGameAddress,
-      abi: diceGameAbi,
-      functionName: 'withdrawRewards', // New function name
-      args: [amountWei],
-    });
-  };
-
-  const withdrawNet = async (netAmount: string) => {
-    // withdrawNet exists in DiceGame contract - it handles net amount calculation
-    // Uses winnings first, then deposits, and calculates fees automatically
+  const withdraw = async (netAmount: string) => {
+    // Primary withdrawal function - withdraws from both deposits and winnings
+    // Uses winnings first, then deposits, and applies 0.5% fee
     const amountWei = parseUnits(netAmount, 6);
     return writeContractAsync({
       address: diceGameAddress,
       abi: diceGameAbi,
-      functionName: 'withdrawNet',
-      args: [amountWei],
-    });
-  };
-
-  const withdrawDeposit = async (amount?: string) => {
-    // withdrawDeposit allows withdrawing just deposits (not winnings)
-    // Pass 0 or undefined to withdraw all remaining deposits
-    const amountWei = amount ? parseUnits(amount, 6) : BigInt(0);
-    return writeContractAsync({
-      address: diceGameAddress,
-      abi: diceGameAbi,
-      functionName: 'withdrawDeposit',
+      functionName: 'withdraw',
       args: [amountWei],
     });
   };
@@ -674,9 +674,7 @@ export function useGameContract() {
     playRound,
     claimPendingReward,
     forfeitPendingReward,
-    withdrawWinnings,
-    withdrawNet,
-    withdrawDeposit,
+    withdraw,
     refetchPlayerState,
     refetchAllowance,
   };

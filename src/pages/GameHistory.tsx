@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
-import { useAccount } from 'wagmi';
+import { useAccount, useChainId, useConfig } from 'wagmi';
 import { Loader2, Trophy, Clock, Coins, TrendingUp, Image as ImageIcon, ExternalLink } from 'lucide-react';
 import { useGameHistory, POOL_CONTRIBUTION_SOURCES } from '@hooks/useGameHistory';
+import { useTransactionHistory } from '@hooks/useTransactionHistory';
 import { useNFTHistory } from '@hooks/useNFTHistory';
 import { useLendingHistory } from '@hooks/useLendingHistory';
 import addresses from '@lib/contracts/addresses.json';
@@ -13,19 +14,51 @@ function formatTimestamp(timestamp?: number) {
 
 export default function GameHistory() {
   const { isConnected } = useAccount();
+  const chainId = useChainId();
+  const config = useConfig();
   const { history: gameHistory, isLoading: isLoadingGame, error: gameError } = useGameHistory();
+  const { history: transactionHistory, isLoading: isLoadingTransaction, error: transactionError } = useTransactionHistory();
   const { history: nftHistory, isLoading: isLoadingNFT, error: nftError } = useNFTHistory();
   const { history: lendingHistory, isLoading: isLoadingLending, error: lendingError } = useLendingHistory();
   
+  // Get block explorer URL for current chain
+  const getExplorerUrl = (txHash: string): string => {
+    try {
+      const currentChain = config.chains.find((chain) => chain.id === chainId);
+      if (currentChain?.blockExplorers?.default?.url) {
+        return `${currentChain.blockExplorers.default.url}/tx/${txHash}`;
+      }
+      // Fallback: Use Sepolia Etherscan if chainId is Sepolia
+      if (chainId === 11155111) {
+        return `https://sepolia.etherscan.io/tx/${txHash}`;
+      }
+      // Fallback: Use Hardhat Local if chainId is 31337
+      if (chainId === 31337) {
+        return `http://127.0.0.1:8545/tx/${txHash}`;
+      }
+      // Default fallback
+      return `https://etherscan.io/tx/${txHash}`;
+    } catch {
+      // Fallback based on chainId
+      if (chainId === 11155111) {
+        return `https://sepolia.etherscan.io/tx/${txHash}`;
+      }
+      if (chainId === 31337) {
+        return `http://127.0.0.1:8545/tx/${txHash}`;
+      }
+      return `https://etherscan.io/tx/${txHash}`;
+    }
+  };
+  
   // Merge and sort all histories by block number
-  const allHistory = [...gameHistory, ...nftHistory as any[], ...lendingHistory as any[]].sort((a, b) => {
+  const allHistory = [...gameHistory, ...transactionHistory as any[], ...nftHistory as any[], ...lendingHistory as any[]].sort((a, b) => {
     const blockA = typeof a.blockNumber === 'bigint' ? Number(a.blockNumber) : 0;
     const blockB = typeof b.blockNumber === 'bigint' ? Number(b.blockNumber) : 0;
     return blockB - blockA; // Most recent first
   });
   
-  const isLoading = isLoadingGame || isLoadingNFT || isLoadingLending;
-  const error = gameError || nftError || lendingError;
+  const isLoading = isLoadingGame || isLoadingTransaction || isLoadingNFT || isLoadingLending;
+  const error = gameError || transactionError || nftError || lendingError;
   const history = allHistory;
 
   if (!isConnected) {
@@ -141,7 +174,19 @@ export default function GameHistory() {
               {history.map((entry) => (
                 <tr key={`${entry.txHash}-${entry.logIndex ?? entry.blockNumber}`} className="hover:bg-slate-900/40">
                   <td className="px-4 py-3 font-semibold text-slate-200">
-                    {entry.action === 'Deposit Collateral' ? (
+                    {entry.action === 'Deposit' ? (
+                      <span className="text-cyan-400">Deposit</span>
+                    ) : entry.action === 'Withdraw' ? (
+                      <span className="text-yellow-400">Withdraw</span>
+                    ) : entry.action === 'Buy Rounds' ? (
+                      <span className="text-blue-400">Buy Rounds</span>
+                    ) : entry.action === 'Claim Reward' ? (
+                      <span className="text-green-400">Claim Reward</span>
+                    ) : entry.action === 'Forfeit Reward' ? (
+                      <span className="text-orange-400">Forfeit Reward</span>
+                    ) : entry.action === 'Claim Refund' ? (
+                      <span className="text-purple-400">Claim Refund</span>
+                    ) : entry.action === 'Deposit Collateral' ? (
                       <span className="text-cyan-400">Deposit Collateral</span>
                     ) : entry.action === 'Withdraw Collateral' ? (
                       <span className="text-yellow-400">Withdraw Collateral</span>
@@ -207,12 +252,43 @@ export default function GameHistory() {
                         </div>
                       </>
                     ) : entry.action === 'Deposit' ? (
-                      <div className="text-xs text-slate-400">Deposited {Number(entry.amount).toFixed(2)} USDT</div>
+                      <div className="text-xs text-slate-400">
+                        Deposited {Number(entry.amount || 0).toFixed(2)} USDT
+                        {entry.fee && Number(entry.fee) > 0 && (
+                          <span className="text-slate-500"> • Fee: {Number(entry.fee).toFixed(2)} USDT</span>
+                        )}
+                      </div>
                     ) : entry.action === 'Withdraw' ? (
-                      <div className="text-xs text-slate-400">Withdrawn {Number(entry.amount).toFixed(2)} USDT</div>
+                      <div className="text-xs text-slate-400">
+                        Withdrawn {Number(entry.amount || 0).toFixed(2)} USDT
+                        {entry.fee && Number(entry.fee) > 0 && (
+                          <span className="text-slate-500"> • Fee: {Number(entry.fee).toFixed(2)} USDT</span>
+                        )}
+                      </div>
+                    ) : entry.action === 'Buy Rounds' ? (
+                      <div className="text-xs text-slate-400">
+                        Purchased {entry.rounds || 0} rounds for {Number(entry.cost || 0).toFixed(2)} USDT
+                      </div>
+                    ) : entry.action === 'Claim Reward' ? (
+                      <div className="text-xs text-green-300">
+                        Claimed {Number(entry.amount || 0).toFixed(2)} USDT from cell {entry.endPosition || 0}
+                        {entry.gameId && <span> • Game #{entry.gameId}</span>}
+                      </div>
+                    ) : entry.action === 'Forfeit Reward' ? (
+                      <div className="text-xs text-slate-400">
+                        Forfeited {Number(entry.amount || 0).toFixed(2)} USDT from cell {entry.endPosition || 0}
+                        {entry.gameId && <span> • Game #{entry.gameId}</span>}
+                      </div>
                     ) : entry.action === 'Claim Refund' ? (
                       <div className="text-xs text-slate-400">
-                        Refunded {Number(entry.amount).toFixed(2)} USDT • {entry.rounds || 0} rounds returned
+                        Refunded {Number(entry.refundAmount || 0).toFixed(2)} USDT
+                        {entry.poolContribution && Number(entry.poolContribution) > 0 && (
+                          <span className="text-blue-300"> • Pool contribution: {Number(entry.poolContribution).toFixed(2)} USDT</span>
+                        )}
+                        {entry.roundsRemainingBefore !== undefined && (
+                          <span> • Rounds before: {entry.roundsRemainingBefore}</span>
+                        )}
+                        {entry.gameId && <span> • Game #{entry.gameId}</span>}
                       </div>
                     ) : entry.action === 'Penalty Refund' ? (
                       <div className="text-xs text-slate-400">
@@ -314,11 +390,15 @@ export default function GameHistory() {
                   </td>
                   <td className="px-4 py-3 text-slate-200 font-semibold">
                     {entry.action === 'Pool Contribution' ? (
-                      <span className="text-blue-300">{Number(entry.amount).toFixed(2)} USDT</span>
-                    ) : ['Play Round', 'Pending Reward', 'Reward Claimed', 'Reward Forfeited', 'Leopard Bonus'].includes(
+                      <span className="text-blue-300">{Number(entry.amount || 0).toFixed(2)} USDT</span>
+                    ) : entry.action === 'Buy Rounds' ? (
+                      <span className="text-blue-300">{Number(entry.cost || 0).toFixed(2)} USDT</span>
+                    ) : entry.action === 'Claim Refund' ? (
+                      <span className="text-purple-300">{Number(entry.refundAmount || 0).toFixed(2)} USDT</span>
+                    ) : ['Play Round', 'Pending Reward', 'Reward Claimed', 'Reward Forfeited', 'Leopard Bonus', 'Claim Reward', 'Forfeit Reward'].includes(
                       entry.action,
                     )
-                      ? `${Number(entry.payout).toFixed(2)} USDT`
+                      ? `${Number(entry.payout || entry.amount || 0).toFixed(2)} USDT`
                       : ['NFT Listed', 'NFT Purchased', 'Auction Bid', 'Auction Settled', 'Offer Created', 'Offer Accepted', 'Bid Refunded', 'Offer Cancelled', 'Offer Expired'].includes(entry.action)
                       ? entry.amount && entry.paymentToken
                         ? `${Number(entry.amount).toFixed(entry.paymentToken.toLowerCase() === addresses.contracts.MockUSDT?.toLowerCase() ? 2 : 6)} ${entry.paymentToken.toLowerCase() === addresses.contracts.MockUSDT?.toLowerCase() ? 'USDT' : 'PLATFORM'}`
@@ -356,7 +436,7 @@ export default function GameHistory() {
                       ? entry.txHash
                         ? (
                             <a
-                              href={`https://localhost:8545/tx/${entry.txHash}`}
+                              href={getExplorerUrl(entry.txHash)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 text-xs"

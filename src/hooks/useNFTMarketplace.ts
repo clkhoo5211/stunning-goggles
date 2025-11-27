@@ -127,6 +127,7 @@ export function useNFTMarketplace() {
           abi: erc20Abi,
           functionName: 'approve',
           args: [marketplaceAddress, listing.price],
+          gas: 100000n, // ERC20 approve typically needs ~46k gas, 100k is safe
         });
         toast.info('Approval transaction submitted. Please wait...');
         // Wait a bit for approval

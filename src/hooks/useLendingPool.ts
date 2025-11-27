@@ -233,6 +233,7 @@ export function useLendingPool() {
           abi: erc20Abi,
           functionName: 'approve',
           args: [collateralManagerAddress, amountWei], // Approve CollateralManager!
+          gas: 100000n, // ERC20 approve typically needs ~46k gas, 100k is safe
         });
         
         // Wait for approval transaction to be mined
@@ -710,6 +711,7 @@ export function useLendingPool() {
           abi: erc20Abi,
           functionName: 'approve',
           args: [lendingPoolAddress, amountWei],
+          gas: 100000n, // ERC20 approve typically needs ~46k gas, 100k is safe
         });
         
         // Wait for approval transaction to be mined

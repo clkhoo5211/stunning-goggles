@@ -76,9 +76,13 @@ const DiceGame: React.FC = () => {
     ((decisionState?.pendingActive ?? false) || (playerState?.pendingRewardActive ?? false)) &&
     !pendingExpiredLocally;
   const roundsRemaining = playerState?.roundsRemaining ?? 0;
-  const sessionRounds = roundsPerPackage ?? 10;
+  // Use roundsPerPackage from contract, but show loading state if not available
+  const sessionRounds = roundsPerPackage ?? 10; // Fallback for display only
   const roundCost = costPerRound ? parseFloat(costPerRound) : 100;
-  const sessionCost = sessionRounds * roundCost;
+  const sessionCost = roundsPerPackage && costPerRound ? roundsPerPackage * parseFloat(costPerRound) : sessionRounds * roundCost;
+
+  // Debug logging
+  console.log('[DiceGame] roundsPerPackage:', roundsPerPackage, 'sessionRounds:', sessionRounds);
 
   const pendingPayoutValue = useMemo(() => {
     if (!playerState?.pendingPayout) return 0;
@@ -198,6 +202,15 @@ const DiceGame: React.FC = () => {
       return;
     }
 
+    // Validate that roundsPerPackage is loaded from contract
+    if (!roundsPerPackage) {
+      console.error('roundsPerPackage is not loaded:', { roundsPerPackage, sessionRounds });
+      toast.error('Loading game configuration... Please wait and try again.');
+      return;
+    }
+
+    console.log('Buy rounds called with:', { roundsPerPackage, sessionRounds, playerState });
+
     if (hasPendingReward) {
       toast.error('Resolve your pending reward before buying a new session.');
       return;
@@ -213,19 +226,63 @@ const DiceGame: React.FC = () => {
       return;
     }
 
+    // Double-check roundsPerPackage is defined (defensive programming)
+    const roundsToBuy = roundsPerPackage;
+    if (!roundsToBuy || roundsToBuy <= 0) {
+      console.error('roundsPerPackage is invalid:', { roundsPerPackage, roundsToBuy });
+      toast.error('Game configuration not loaded. Please refresh the page and try again.');
+      return;
+    }
+
     try {
       setIsBuying(true);
       playSound('buy_session');
       const toastId = toast.loading(
-        `Purchasing new ${sessionRounds}-round session (${sessionCost.toLocaleString()} USDT)...`
+        `Purchasing new ${roundsToBuy}-round session (${sessionCost.toLocaleString()} USDT)...`
       );
-      await buyRounds(sessionRounds);
+      // Use the exact value from contract, not the fallback
+      console.log('[handleBuyRounds] Calling buyRounds with roundsToBuy:', roundsToBuy, 'roundsPerPackage:', roundsPerPackage);
+      await buyRounds(roundsToBuy);
       toast.success('Session purchased! Good luck 🍀', { id: toastId });
       setIsBuyModalOpen(false);
       await refetchPlayerState?.();
     } catch (error: any) {
       console.error('Buy rounds error:', error);
-      toast.error(error?.shortMessage || error?.message || 'Failed to buy rounds');
+      console.error('Error details:', { 
+        roundsPerPackage, 
+        roundsToBuy,
+        sessionRounds,
+        playerState,
+        errorMessage: error?.shortMessage || error?.message,
+        errorData: error?.data,
+        errorCause: error?.cause,
+        fullError: JSON.stringify(error, Object.getOwnPropertyNames(error))
+      });
+      
+      // Provide more helpful error message based on error type
+      const errorMessage = error?.shortMessage || error?.message || 'Failed to buy rounds';
+      
+      // Check for specific revert reasons
+      if (errorMessage.includes('InvalidAmount') || errorMessage.includes('Internal JSON-RPC')) {
+        // Check player state to provide more specific error
+        if (playerState?.pendingRewardActive) {
+          toast.error('You have a pending reward. Please claim or forfeit it first.');
+        } else if (playerState?.hasActiveSession && playerState?.roundsRemaining > 0) {
+          toast.error(`You have an active session with ${playerState.roundsRemaining} rounds remaining. Finish it first.`);
+        } else if (playerState && Number.parseFloat(playerState.depositedBalance) < sessionCost) {
+          toast.error(`Insufficient balance. You need ${sessionCost.toLocaleString()} USDT but have ${Number.parseFloat(playerState.depositedBalance).toLocaleString()} USDT.`);
+        } else {
+          toast.error(`Invalid round count. The contract requires exactly ${roundsToBuy} rounds per package. Please refresh and try again.`);
+        }
+      } else if (errorMessage.includes('PendingReward')) {
+        toast.error('You have a pending reward. Please claim or forfeit it first.');
+      } else if (errorMessage.includes('ActiveSession')) {
+        toast.error(`You have an active session. Finish it first.`);
+      } else if (errorMessage.includes('InsufficientBalance')) {
+        toast.error(`Insufficient balance. Deposit more USDT to buy rounds.`);
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setIsBuying(false);
     }

@@ -26,7 +26,7 @@ export function BalanceCard({ showCard = true }: BalanceCardProps) {
     depositTokenEnabled,
     refetchAllowance,
     refetchDepositTokenBalance,
-    withdrawNet,
+    withdraw,
     depositFeeBps,
     withdrawFeeBps,
     roundsPerPackage,
@@ -94,7 +94,7 @@ export function BalanceCard({ showCard = true }: BalanceCardProps) {
 
   const depositBalance = playerState?.depositedBalance || '0';
   const winningsBalance = playerState?.winningsBalance || '0';
-  // Withdrawable balance includes both winnings and deposits (for withdrawNet)
+  // Withdrawable balance includes both winnings and deposits (for withdraw)
   // These are already formatted strings, so add them as numbers
   const withdrawableBalance = (parseFloat(winningsBalance || '0') + parseFloat(depositBalance || '0')).toString();
   const lifetimeDeposited = playerState?.totalDeposited || '0';
@@ -295,7 +295,7 @@ export function BalanceCard({ showCard = true }: BalanceCardProps) {
     try {
       setIsProcessing(true);
       const withdrawToast = toast.loading(`Withdrawing ${numericAmount} ${tokenSymbol}...`);
-      await withdrawNet(withdrawAmount);
+      await withdraw(withdrawAmount);
       playSound('withdraw');
       toast.success('Withdrawal successful!', { id: withdrawToast });
       setIsWithdrawOpen(false);

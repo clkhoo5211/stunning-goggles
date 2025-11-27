@@ -74,16 +74,6 @@ export const diceGameAbi = [
   },
   {
     "inputs": [],
-    "name": "InsufficientBalance",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidAmount",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "InvalidInitialization",
     "type": "error"
   },
@@ -99,27 +89,12 @@ export const diceGameAbi = [
   },
   {
     "inputs": [],
-    "name": "PenaltyRerollFailed",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "PendingReward",
     "type": "error"
   },
   {
     "inputs": [],
     "name": "ReentrancyGuardReentrantCall",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "RerollOverflow",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "TransferFailed",
     "type": "error"
   },
   {
@@ -142,31 +117,6 @@ export const diceGameAbi = [
     "inputs": [],
     "name": "ZeroAddress",
     "type": "error"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "player",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "gameId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "bytes32",
-        "name": "profile",
-        "type": "bytes32"
-      }
-    ],
-    "name": "BiasProfileSelected",
-    "type": "event"
   },
   {
     "anonymous": false,
@@ -373,43 +323,6 @@ export const diceGameAbi = [
       }
     ],
     "name": "Initialized",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "player",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "gameId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint8",
-        "name": "face",
-        "type": "uint8"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "payout",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint8",
-        "name": "endPosition",
-        "type": "uint8"
-      }
-    ],
-    "name": "LeopardPayout",
     "type": "event"
   },
   {
@@ -778,37 +691,6 @@ export const diceGameAbi = [
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
-        "internalType": "address",
-        "name": "player",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "gameId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint8",
-        "name": "endPosition",
-        "type": "uint8"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint64",
-        "name": "roundsCleared",
-        "type": "uint64"
-      }
-    ],
-    "name": "SessionTerminatedByPenalty",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
         "indexed": false,
         "internalType": "address",
         "name": "account",
@@ -898,19 +780,6 @@ export const diceGameAbi = [
   {
     "inputs": [],
     "name": "DEFAULT_ADMIN_ROLE",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "DEFAULT_BIAS_PROFILE",
     "outputs": [
       {
         "internalType": "bytes32",
@@ -1014,38 +883,12 @@ export const diceGameAbi = [
   },
   {
     "inputs": [],
-    "name": "PROTECTION_BIAS_PROFILE",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "PROTECTION_REROLL_LIMIT",
     "outputs": [
       {
         "internalType": "uint8",
         "name": "",
         "type": "uint8"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "RISK_BIAS_PROFILE",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
       }
     ],
     "stateMutability": "view",
@@ -1153,6 +996,19 @@ export const diceGameAbi = [
     "name": "deposit",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "depositModule",
+    "outputs": [
+      {
+        "internalType": "contract DepositModule",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -1343,6 +1199,19 @@ export const diceGameAbi = [
   },
   {
     "inputs": [],
+    "name": "gameLogicModule",
+    "outputs": [
+      {
+        "internalType": "contract GameLogicModule",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "gameType",
     "outputs": [
       {
@@ -1355,40 +1224,8 @@ export const diceGameAbi = [
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint8",
-        "name": "cellNumber",
-        "type": "uint8"
-      }
-    ],
-    "name": "getAdjustedCellPayout",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "adjustedPayout",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
-    "name": "getAllAdjustedPayouts",
-    "outputs": [
-      {
-        "internalType": "uint256[30]",
-        "name": "adjustedPayouts",
-        "type": "uint256[30]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-    {
-      "inputs": [],
-      "name": "getGameId",
+    "name": "getGameId",
     "outputs": [
       {
         "internalType": "bytes32",
@@ -1474,6 +1311,19 @@ export const diceGameAbi = [
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "helper",
+    "outputs": [
+      {
+        "internalType": "contract DiceGameHelper",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "components": [
@@ -1540,6 +1390,36 @@ export const diceGameAbi = [
           {
             "internalType": "address",
             "name": "usdtToken",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "helper",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "withdrawModule",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "depositModule",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "gameLogicModule",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "rewardModule",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "playOrchestrator",
             "type": "address"
           },
           {
@@ -1739,6 +1619,19 @@ export const diceGameAbi = [
   },
   {
     "inputs": [],
+    "name": "playOrchestrator",
+    "outputs": [
+      {
+        "internalType": "contract PlayOrchestratorModule",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "playerRegistry",
     "outputs": [
       {
@@ -1836,6 +1729,19 @@ export const diceGameAbi = [
     "name": "revokeRole",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "rewardModule",
+    "outputs": [
+      {
+        "internalType": "contract RewardModule",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -2037,16 +1943,16 @@ export const diceGameAbi = [
     "type": "function"
   },
   {
-    "inputs": [
+    "inputs": [],
+    "name": "withdrawModule",
+    "outputs": [
       {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
+        "internalType": "contract WithdrawModule",
+        "name": "",
+        "type": "address"
       }
     ],
-    "name": "withdrawDeposit",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -2057,20 +1963,7 @@ export const diceGameAbi = [
         "type": "uint256"
       }
     ],
-    "name": "withdrawNet",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "withdrawRewards",
+    "name": "withdraw",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

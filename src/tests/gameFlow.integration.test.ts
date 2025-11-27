@@ -249,33 +249,17 @@ describe('LuckChain frontend contract flow (integration)', () => {
       expect(postSession).toBeTruthy();
       expect(postSession!.pendingRewardActive).toBe(false);
 
-      // Withdraw winnings only if above the configured minimum.
-      // Note: minWithdrawAmount may not exist in DiceGame, use withdrawRewards with amount
+      // Withdraw from both deposits and winnings via withdraw()
+      // withdraw() uses winnings first, then deposits, with 0.5% fee
       const latestState = await getPlayerState();
-      if (latestState && latestState.winningsBalance > 0n) {
-        // Use a small amount for withdrawal test
-        const withdrawAmount = latestState.winningsBalance > parseUnits('1', 6) 
-          ? parseUnits('1', 6) 
-          : latestState.winningsBalance;
+      const totalBalance = (latestState?.depositedBalance || 0n) + (latestState?.winningsBalance || 0n);
+      if (latestState && totalBalance > parseUnits('1', 6)) {
+        // Use a small amount for withdrawal test (net amount after 0.5% fee)
+        const withdrawNetAmount = parseUnits('1', 6);
         await walletClient.writeContract({
           address: GameController,
           abi: diceGameAbi,
-          functionName: 'withdrawRewards',
-          args: [withdrawAmount],
-        });
-      }
-
-      // Withdraw part of the deposit via withdrawRewards
-      // Note: withdrawNet may not exist in DiceGame, use withdrawRewards instead
-      const finalStateBeforeWithdraw = await getPlayerState();
-      if (finalStateBeforeWithdraw && finalStateBeforeWithdraw.depositedBalance > 0n) {
-        const withdrawNetAmount = finalStateBeforeWithdraw.depositedBalance > parseUnits('1', 6)
-          ? parseUnits('1', 6)
-          : finalStateBeforeWithdraw.depositedBalance;
-        await walletClient.writeContract({
-          address: GameController,
-          abi: diceGameAbi,
-          functionName: 'withdrawRewards',
+          functionName: 'withdraw',
           args: [withdrawNetAmount],
         });
       }
