@@ -1,7 +1,7 @@
 {
   "network": "sepolia",
   "chainId": 11155111,
-  "timestamp": "2025-11-27T07:03:38.670Z",
+  "timestamp": "2025-11-27T11:47:00.194Z",
   "contracts": {
     "MockUSDT": "0xbef2F53515Cb775F174Fd1f440882FB9F1874943",
     "MockPlatformToken": "0x30E9479bBE35088fD401E7B61a23c1d197e76356",
@@ -31,7 +31,8 @@
     "LendingPool": "0xAfa27555F87EF670Fc43Bd3CeACDE87E4a5Fb9cf",
     "CollateralManager": "0xD169D63ED5a209c9cab305cFD4dF7204D14DA7f6",
     "InterestRateModel": "0xBEf414C53547c9765c60b393329Ba9d61935ED3e",
-    "LiquidationEngine": "0x42e32C2816FE57d6983efcd8bF26CD5843b7076F"
+    "LiquidationEngine": "0x42e32C2816FE57d6983efcd8bF26CD5843b7076F",
+    "DiceGameExt": "0xF875Eb6fe1b9122Da4215ccE747edef36d0A5904"
   },
   "config": {
     "costPerRound": "100000000",
