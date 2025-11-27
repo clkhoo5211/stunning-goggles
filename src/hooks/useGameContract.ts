@@ -102,8 +102,9 @@ async function estimateGasWithBuffer(
     // Add 30% buffer for safety
     const bufferedGas = (estimatedGas * 130n) / 100n;
     
-    // Ensure we don't exceed the fallback (as a maximum cap)
-    return bufferedGas > fallbackGas ? fallbackGas : bufferedGas;
+    // Use the higher of bufferedGas or fallback (fallback is minimum, not maximum)
+    // This ensures we always have enough gas even if estimation is low
+    return bufferedGas > fallbackGas ? bufferedGas : fallbackGas;
   } catch (error) {
     // If estimation fails, use fallback
     console.warn('Gas estimation failed, using fallback:', error);

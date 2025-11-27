@@ -389,6 +389,27 @@ const DiceGame: React.FC = () => {
       return;
     }
 
+    // Validate claim conditions before attempting transaction
+    if (!playerState) {
+      toast.error('Player state is still loading. Please wait a moment.');
+      return;
+    }
+
+    if (!playerState.pendingRewardActive) {
+      toast.error('No pending reward to claim. The reward may have already been claimed or expired.');
+      return;
+    }
+
+    // Check if deadline has expired
+    if (playerState.decisionDeadline && decisionState?.currentTimestamp) {
+      const deadline = Number(playerState.decisionDeadline);
+      const currentTime = Number(decisionState.currentTimestamp);
+      if (currentTime > deadline) {
+        toast.error('The decision deadline has expired. Please forfeit the reward instead.');
+        return;
+      }
+    }
+
     try {
       setIsTransactionPending(true);
       setTransactionMessage('Claiming reward and ending session...');
