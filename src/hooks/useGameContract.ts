@@ -619,26 +619,12 @@ export function useGameContract() {
     }
     claimInFlightRef.current = true;
     try {
-      const contractConfig = {
-        address: diceGameAddress,
-        abi: diceGameAbi,
-        functionName: 'claimReward' as const,
-        args: [] as const,
-      };
-      
-      const gasLimit = await estimateGasWithBuffer(
-        publicClient,
-        address,
-        contractConfig,
-        400000n // Fallback: ClaimReward typically needs ~200-350k gas
-      );
-      
+      // Let the wallet/provider estimate gas automatically - don't force a gas limit
       const hash = await writeContractAsync({
         address: diceGameAddress,
         abi: diceGameAbi,
         functionName: 'claimReward',
         args: [],
-        gas: gasLimit,
       });
       
       // Wait for transaction confirmation
@@ -680,26 +666,12 @@ export function useGameContract() {
         }
       }
       
-      const contractConfig = {
-        address: diceGameAddress,
-        abi: diceGameAbi,
-        functionName: 'forfeitReward' as const,
-        args: [] as const,
-      };
-      
-      const gasLimit = await estimateGasWithBuffer(
-        publicClient,
-        address,
-        contractConfig,
-        400000n // Fallback: ForfeitReward typically needs ~200-350k gas
-      );
-      
+      // Let the wallet/provider estimate gas automatically - don't force a gas limit
       const hash = await writeContractAsync({
         address: diceGameAddress,
         abi: diceGameAbi,
         functionName: 'forfeitReward',
         args: [],
-        gas: gasLimit,
       });
       
       // Wait for transaction confirmation

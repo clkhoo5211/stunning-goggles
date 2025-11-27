@@ -414,15 +414,16 @@ const DiceGame: React.FC = () => {
       setIsTransactionPending(true);
       setTransactionMessage('Claiming reward and ending session...');
       playSound('claim');
-      await toast.promise(claimPendingReward(), {
-        loading: 'Claiming reward and ending session...',
-        success: 'Reward claimed! Session cleared.',
-        error: (error) => prettyRpcError(error),
-      });
+      const toastId = toast.loading('Claiming reward and ending session...');
+      
+      // Wait for transaction to complete (this includes waiting for confirmation)
+      await claimPendingReward();
+      
+      toast.success('Reward claimed! Session cleared.', { id: toastId });
       await refetchPlayerState?.();
     } catch (error: any) {
       console.error('Claim reward error:', error);
-      toast.error(getReadableErrorMessage(error));
+      toast.error(prettyRpcError(error));
     } finally {
       setPendingExpiredLocally(false);
       setIsTransactionPending(false);
@@ -440,15 +441,16 @@ const DiceGame: React.FC = () => {
       setIsTransactionPending(true);
       setTransactionMessage('Forfeiting reward and continuing session...');
       playSound('continue');
-      await toast.promise(forfeitPendingReward(), {
-        loading: 'Forfeiting reward and continuing session...',
-        success: 'Reward forfeited. Continue playing!',
-        error: (error) => prettyRpcError(error),
-      });
+      const toastId = toast.loading('Forfeiting reward and continuing session...');
+      
+      // Wait for transaction to complete (this includes waiting for confirmation)
+      await forfeitPendingReward();
+      
+      toast.success('Reward forfeited. Continue playing!', { id: toastId });
       await refetchPlayerState?.();
     } catch (error: any) {
       console.error('Forfeit reward error:', error);
-      toast.error(getReadableErrorMessage(error));
+      toast.error(prettyRpcError(error));
     } finally {
       setPendingExpiredLocally(false);
       setIsTransactionPending(false);
