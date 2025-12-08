@@ -1,5 +1,5 @@
 // Password from environment variable (set in GitHub Secrets)
-const SECRET_PASSWORD = import.meta.env.VITE_APP_PASSWORD || '654789'; // Fallback for local dev
+const SECRET_PASSWORD = import.meta.env.VITE_APP_PASSWORD || '123456'; // Fallback for local dev
 const TOKEN_KEY = 'auth_token';
 const TOKEN_EXPIRY_HOURS = 24;
 
