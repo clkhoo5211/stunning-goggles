@@ -15,7 +15,7 @@ import {
 import { getTargetChainId } from './contracts/getNetworkConfig';
 
 // Reown (WalletConnect) Project ID
-export const projectId = import.meta.env.VITE_REOWN_PROJECT_ID || '1478687c5ec68d46a47d17c941950005';
+export const projectId = import.meta.env.VITE_REOWN_PROJECT_ID || 'app';
 
 export const hardhatLocal = defineChain({
   id: 31337,
