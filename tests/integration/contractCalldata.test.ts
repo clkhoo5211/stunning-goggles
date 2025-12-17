@@ -7,7 +7,7 @@ import { gameControllerAbi } from '@lib/contracts/abi/gameController';
 import { calldataExecutorAbi } from '@lib/contracts/abi/calldataExecutor';
 
 describe('Calldata preparation for contract calls', () => {
-  const controllerAddress = (addresses.contracts as any).DiceGame as `0x${string}`;
+  const controllerAddress = addresses.contracts.DiceGame as `0x${string}`;
 
   it('encodes DiceGame.play correctly (new architecture)', () => {
     const isClockwise = true;
