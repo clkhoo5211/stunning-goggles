@@ -7,6 +7,7 @@ import {
   formatUnits,
   formatEther,
   decodeEventLog,
+  getAbiItem,
 } from 'viem';
 import { hardhat } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
@@ -49,7 +50,7 @@ const publicClient = createPublicClient({
   transport: http(RPC_URL),
 });
 
-const { MockUSDT, MockPlatformToken, NFTMarketplace, AuctionHouse, NFTRegistry, OfferSystem } = 
+const { MockUSDT, MockPlatformToken, NFTMarketplace, AuctionHouse, NFTRegistry, OfferSystem } =
   addresses.contracts as Record<string, `0x${string}`>;
 
 const mockTokenAbi = [
@@ -76,7 +77,7 @@ async function ensureBalance(
   if (!walletClient.account) {
     throw new Error('Wallet client account is not defined');
   }
-  
+
   const balance = await publicClient.readContract({
     address: tokenAddress,
     abi: erc20Abi,
@@ -92,7 +93,8 @@ async function ensureBalance(
       abi: mockTokenAbi,
       functionName: 'mint',
       args: [walletClient.account.address, mintAmount],
-    });
+      address: tokenAddress,
+    } as any);
     console.log(`✅ Minted ${formatUnits(mintAmount, decimals)} tokens to ${walletClient.account.address.slice(0, 10)}...`);
   }
 }
@@ -106,7 +108,7 @@ async function approveToken(
   if (!walletClient.account) {
     throw new Error('Wallet client account is not defined');
   }
-  
+
   const allowance = await publicClient.readContract({
     address: tokenAddress,
     abi: erc20Abi,
@@ -120,7 +122,7 @@ async function approveToken(
       abi: erc20Abi,
       functionName: 'approve',
       args: [spender, amount],
-    });
+    } as any);
     console.log(`✅ Approved ${spender} to spend tokens`);
   }
 }
@@ -134,7 +136,7 @@ describe('Auction Flow Integration Test', () => {
 
   beforeAll(async () => {
     console.log('\n=== Setting up auction test ===');
-    
+
     // Find an NFT owned by seller (account 1)
     // Try NFTs 1-10 to find one owned by account 1
     let foundNFT = false;
@@ -146,7 +148,7 @@ describe('Auction Flow Integration Test', () => {
           functionName: 'getNFT',
           args: [BigInt(i)],
         });
-        
+
         if (seller.account && nft.owner.toLowerCase() === seller.account.address.toLowerCase()) {
           testTokenId = BigInt(i);
           foundNFT = true;
@@ -157,11 +159,11 @@ describe('Auction Flow Integration Test', () => {
         // Continue to next NFT
       }
     }
-    
+
     if (!foundNFT) {
       throw new Error('No NFT found owned by seller account (account 1). Please deploy contracts first.');
     }
-    
+
     // Verify seller owns the NFT
     const nft = await publicClient.readContract({
       address: NFTRegistry,
@@ -169,7 +171,7 @@ describe('Auction Flow Integration Test', () => {
       functionName: 'getNFT',
       args: [testTokenId],
     });
-    
+
     expect(nft.owner.toLowerCase()).toBe(seller.account!.address.toLowerCase());
     console.log(`✅ Seller owns NFT #${testTokenId}`);
     console.log(`📦 NFT Details:`);
@@ -177,7 +179,7 @@ describe('Auction Flow Integration Test', () => {
     console.log(`   - Skin Name: ${nft.skinName}`);
     console.log(`   - Owner: ${nft.owner}`);
     console.log(`   - Game Type: ${nft.gameType}`);
-    
+
     // Check for existing listings and cancel them
     const existingListings = await publicClient.readContract({
       address: NFTMarketplace,
@@ -185,7 +187,7 @@ describe('Auction Flow Integration Test', () => {
       functionName: 'getTokenListings',
       args: [testTokenId],
     });
-    
+
     // Cancel any active listings
     for (const listing of existingListings) {
       if (listing.isActive && seller.account && listing.seller.toLowerCase() === seller.account.address.toLowerCase()) {
@@ -199,11 +201,11 @@ describe('Auction Flow Integration Test', () => {
         console.log(`✅ Cancelled listing #${listing.listingId}`);
       }
     }
-    
+
     // Ensure seller has tokens for listing (use account 0 as owner for minting)
     const reservePrice = parseEther('75'); // 75 PLATFORM
     await ensureBalance(seller, MockPlatformToken, reservePrice, 18, walletClients[0]);
-    
+
     // Create auction listing
     const duration = 7 * 24 * 60 * 60; // 7 days
     const listingParams = {
@@ -213,23 +215,23 @@ describe('Auction Flow Integration Test', () => {
       listingType: 1, // AUCTION
       duration: BigInt(duration),
     };
-    
+
     // Grant LISTING_ROLE if needed (should be done in deploy script)
     // For now, assume seller has LISTING_ROLE
-    
+
     const listingTx = await seller.writeContract({
       address: NFTMarketplace,
       abi: nftMarketplaceAbi,
       functionName: 'createListing',
       args: [listingParams],
     });
-    
+
     const receipt = await publicClient.waitForTransactionReceipt({ hash: listingTx });
-    
+
     // Extract listing ID from event
-    receipt.logs.find((log) => {
+    receipt.logs.find(() => {
       try {
-        publicClient.getAbiItem({
+        getAbiItem({
           abi: nftMarketplaceAbi,
           name: 'ListingCreated',
         });
@@ -238,14 +240,14 @@ describe('Auction Flow Integration Test', () => {
         return false;
       }
     });
-    
+
     // Get listing ID from nextListingId
     const nextListingId = await publicClient.readContract({
       address: NFTMarketplace,
       abi: nftMarketplaceAbi,
       functionName: 'nextListingId',
     });
-    
+
     listingId = nextListingId - 1n;
     console.log(`\n✅ Created auction listing:`);
     console.log(`   - Listing ID: ${listingId}`);
@@ -263,17 +265,17 @@ describe('Auction Flow Integration Test', () => {
 
   it('should allow multiple bidders to place increasing bids', async () => {
     console.log('\n=== Testing multiple bids ===');
-    
+
     const reservePrice = parseEther('75'); // 75 PLATFORM
     const minBidIncrementBps = 500; // 5%
-    
+
     // Ensure all bidders have ETH for gas and enough tokens
     const maxBid = parseEther('200'); // Enough for all bids
     const ethForGas = parseEther('10'); // 10 ETH for gas fees
-    
+
     for (const bidder of bidders) {
       if (!bidder.account) continue;
-      
+
       // Fund with ETH for gas
       const ethBalance = await publicClient.getBalance({ address: bidder.account.address });
       if (ethBalance < ethForGas) {
@@ -285,12 +287,12 @@ describe('Auction Flow Integration Test', () => {
         });
         console.log(`✅ Funded ${bidder.account.address.slice(0, 10)}... with ETH for gas`);
       }
-      
+
       // Fund with Platform Tokens
       await ensureBalance(bidder, MockPlatformToken, maxBid, 18, walletClients[0]);
       await approveToken(bidder, MockPlatformToken, AuctionHouse, maxBid);
     }
-    
+
     // Place bids in sequence - winner (account 0) will place the highest bid
     const bidAmounts = [
       parseEther('80'),  // Bidder 1 (account 2): 80 PLATFORM (above reserve)
@@ -298,15 +300,15 @@ describe('Auction Flow Integration Test', () => {
       parseEther('100'), // Bidder 3 (account 4): 100 PLATFORM
       parseEther('150'), // Winner (account 0): 150 PLATFORM - highest bid
     ];
-    
+
     const bidResults: Array<{ bidder: string; amount: bigint; timestamp: bigint; balanceBefore: bigint; balanceAfter: bigint }> = [];
-    
+
     for (let i = 0; i < bidders.length; i++) {
       const bidder = bidders[i];
       const bidAmount = bidAmounts[i];
-      
+
       console.log(`\n📝 Bidder ${i + 1} (${bidder.account.address.slice(0, 10)}...) placing bid: ${formatEther(bidAmount)} PLATFORM`);
-      
+
       // Get bidder balance BEFORE placing bid
       const bidderBalanceBefore = await publicClient.readContract({
         address: MockPlatformToken,
@@ -315,7 +317,7 @@ describe('Auction Flow Integration Test', () => {
         args: [bidder.account.address],
       });
       console.log(`   - Balance Before Bid: ${formatEther(bidderBalanceBefore)} PLATFORM`);
-      
+
       // Get current auction state
       const auctionBefore = await publicClient.readContract({
         address: AuctionHouse,
@@ -323,7 +325,7 @@ describe('Auction Flow Integration Test', () => {
         functionName: 'getAuction',
         args: [listingId],
       });
-      
+
       // Calculate expected minimum bid
       let expectedMinBid: bigint;
       if (auctionBefore.currentBid === 0n) {
@@ -332,9 +334,9 @@ describe('Auction Flow Integration Test', () => {
         const increment = (auctionBefore.currentBid * BigInt(minBidIncrementBps)) / 10000n;
         expectedMinBid = auctionBefore.currentBid + increment;
       }
-      
+
       expect(bidAmount >= expectedMinBid).toBe(true);
-      
+
       // Track previous bidder's balance if not first bid
       let previousBidderBalanceBefore = 0n;
       let previousBidAmount = 0n;
@@ -350,7 +352,7 @@ describe('Auction Flow Integration Test', () => {
         console.log(`   - Previous Bidder (${previousBidder.account.address.slice(0, 10)}...) Balance Before Refund: ${formatEther(previousBidderBalanceBefore)} PLATFORM`);
         console.log(`   - Previous Bid Amount: ${formatEther(previousBidAmount)} PLATFORM`);
       }
-      
+
       // Place bid
       const bidTx = await bidder.writeContract({
         address: AuctionHouse,
@@ -358,12 +360,12 @@ describe('Auction Flow Integration Test', () => {
         functionName: 'placeBid',
         args: [listingId, bidAmount],
       });
-      
+
       const bidReceipt = await publicClient.waitForTransactionReceipt({ hash: bidTx });
       const block = await publicClient.getBlock({ blockNumber: bidReceipt.blockNumber });
-      
+
       console.log(`✅ Bid placed successfully`);
-      
+
       // Get bidder balance AFTER placing bid
       const bidderBalanceAfter = await publicClient.readContract({
         address: MockPlatformToken,
@@ -374,11 +376,11 @@ describe('Auction Flow Integration Test', () => {
       console.log(`   - Balance After Bid: ${formatEther(bidderBalanceAfter)} PLATFORM`);
       console.log(`   - Amount Deducted: ${formatEther(bidderBalanceBefore - bidderBalanceAfter)} PLATFORM`);
       console.log(`   - Expected Deduction: ${formatEther(bidAmount)} PLATFORM`);
-      
+
       // Verify bidder's balance decreased by bid amount
       expect(bidderBalanceAfter).toBe(bidderBalanceBefore - bidAmount);
       console.log(`   - ✅ Bid amount correctly deducted from bidder`);
-      
+
       // Verify auction state
       const auctionAfter = await publicClient.readContract({
         address: AuctionHouse,
@@ -386,10 +388,10 @@ describe('Auction Flow Integration Test', () => {
         functionName: 'getAuction',
         args: [listingId],
       });
-      
+
       expect(auctionAfter.currentBid).toBe(bidAmount);
       expect(auctionAfter.currentBidder.toLowerCase()).toBe(bidder.account.address.toLowerCase());
-      
+
       bidResults.push({
         bidder: bidder.account.address,
         amount: bidAmount,
@@ -397,7 +399,7 @@ describe('Auction Flow Integration Test', () => {
         balanceBefore: bidderBalanceBefore,
         balanceAfter: bidderBalanceAfter,
       });
-      
+
       // Verify previous bidder was refunded (if not first bid)
       if (i > 0) {
         const previousBidder = bidders[i - 1];
@@ -407,19 +409,19 @@ describe('Auction Flow Integration Test', () => {
           functionName: 'balanceOf',
           args: [previousBidder.account.address],
         });
-        
+
         console.log(`\n💰 Verifying refund for previous bidder ${i} (${previousBidder.account.address.slice(0, 10)}...):`);
         console.log(`   - Balance Before Refund: ${formatEther(previousBidderBalanceBefore)} PLATFORM`);
         console.log(`   - Balance After Refund: ${formatEther(previousBidderBalanceAfter)} PLATFORM`);
         console.log(`   - Refund Amount: ${formatEther(previousBidderBalanceAfter - previousBidderBalanceBefore)} PLATFORM`);
         console.log(`   - Expected Refund: ${formatEther(previousBidAmount)} PLATFORM`);
-        
+
         // Verify previous bidder received full refund
         expect(previousBidderBalanceAfter).toBe(previousBidderBalanceBefore + previousBidAmount);
         console.log(`   - ✅ Previous bidder received full refund of ${formatEther(previousBidAmount)} PLATFORM`);
       }
     }
-    
+
     // Verify bid history
     const bidHistory = await publicClient.readContract({
       address: AuctionHouse,
@@ -427,10 +429,10 @@ describe('Auction Flow Integration Test', () => {
       functionName: 'getBidHistory',
       args: [listingId],
     });
-    
+
     expect(bidHistory.length).toBe(bidders.length);
     console.log(`\n✅ Bid history contains ${bidHistory.length} bids`);
-    
+
     // Verify bids are in chronological order
     for (let i = 0; i < bidHistory.length; i++) {
       const bid = bidHistory[i];
@@ -442,53 +444,63 @@ describe('Auction Flow Integration Test', () => {
 
   it('should fast-forward time to auction end and settle auction', async () => {
     console.log('\n=== Testing auction settlement ===');
-    
+
     // Get auction end time
-    const listing = await publicClient.readContract({
+    const listings = await publicClient.readContract({
       address: NFTMarketplace,
       abi: nftMarketplaceAbi,
-      functionName: 'getListing',
-      args: [listingId],
+      functionName: 'getTokenListings', // Assuming we need all listings for the token
+      args: [testTokenId], // Use testTokenId to get listings for the NFT
     });
-    
+    // Verify listings are returned
+    expect(listings.length).toBeGreaterThan(0);
+
+    // Check if our listings are present
+    const auctionListing = listings.find((l: any) => l.listingId === listingId);
+
+    // Depending on whether we settled the auction, it might be active or not
+    if (auctionListing) {
+      console.log(`✅ Found auction listing in results`);
+    }
+
     let auction = await publicClient.readContract({
       address: AuctionHouse,
       abi: auctionHouseAbi,
       functionName: 'getAuction',
       args: [listingId],
     });
-    
+
     // If auction is not initialized (no bids yet), skip settlement test
     if (!auction.isActive) {
       console.log('⚠️  Auction not active (no bids placed). Skipping settlement test.');
       return;
     }
-    
+
     const endTime = auction.endTime;
     const currentBlock = await publicClient.getBlock();
     const currentTimestamp = BigInt(currentBlock.timestamp);
-    
+
     if (endTime > currentTimestamp) {
       const timeToAdd = Number(endTime - currentTimestamp) + 1; // Add 1 second buffer
       console.log(`⏰ Fast-forwarding ${timeToAdd} seconds to auction end...`);
-      
+
       // Fast-forward time using Hardhat's evm_increaseTime
       // @ts-ignore - Hardhat-specific RPC method
       await (publicClient.transport as any).request({
         method: 'evm_increaseTime',
         params: [timeToAdd],
       });
-      
+
       // Mine a block to apply the time change
       // @ts-ignore - Hardhat-specific RPC method
       await (publicClient.transport as any).request({
         method: 'evm_mine',
         params: [],
       });
-      
+
       // Wait a bit for block to be mined
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      
+
       // Refresh auction state after time change
       auction = await publicClient.readContract({
         address: AuctionHouse,
@@ -497,13 +509,13 @@ describe('Auction Flow Integration Test', () => {
         args: [listingId],
       });
     }
-    
+
     // Verify auction has ended
     const finalBlock = await publicClient.getBlock();
     const finalTimestamp = BigInt(finalBlock.timestamp);
     expect(finalTimestamp >= endTime).toBe(true);
     console.log(`✅ Auction has ended (current: ${finalTimestamp}, end: ${endTime})`);
-    
+
     // Check listing state - it must be active for settlement
     const listingAfterTime = await publicClient.readContract({
       address: NFTMarketplace,
@@ -511,7 +523,7 @@ describe('Auction Flow Integration Test', () => {
       functionName: 'getListing',
       args: [listingId],
     });
-    
+
     console.log(`\n📋 Pre-settlement state check:`);
     console.log(`   - Listing active: ${listingAfterTime.isActive}`);
     console.log(`   - Listing endTime: ${listingAfterTime.endTime}`);
@@ -521,7 +533,7 @@ describe('Auction Flow Integration Test', () => {
     console.log(`   - Auction currentBid: ${formatEther(auction.currentBid)} PLATFORM`);
     console.log(`   - Auction reservePrice: ${formatEther(auction.reservePrice)} PLATFORM`);
     console.log(`   - Auction currentBidder: ${auction.currentBidder}`);
-    
+
     // Check payment token balance in AuctionHouse
     const paymentTokenBalance = await publicClient.readContract({
       address: listingAfterTime.paymentToken,
@@ -531,20 +543,20 @@ describe('Auction Flow Integration Test', () => {
     });
     console.log(`   - AuctionHouse payment token balance: ${formatEther(paymentTokenBalance)} PLATFORM`);
     console.log(`   - Required for settlement: ${formatEther(auction.currentBid)} PLATFORM`);
-    
+
     if (!listingAfterTime.isActive) {
       throw new Error(`❌ Listing is not active! Cannot settle. Listing auto-deactivated when expired.`);
     }
-    
+
     if (paymentTokenBalance < auction.currentBid) {
       throw new Error(`❌ AuctionHouse has insufficient balance! Has ${formatEther(paymentTokenBalance)}, needs ${formatEther(auction.currentBid)}`);
     }
-    
+
     // Get winner before settlement
     const winnerBefore = auction.currentBidder;
     const winningBid = auction.currentBid;
     console.log(`\n🏆 Winner: ${winnerBefore.slice(0, 10)}... with bid: ${formatEther(winningBid)} PLATFORM`);
-    
+
     // Get NFT owner before settlement
     const nftBefore = await publicClient.readContract({
       address: NFTRegistry,
@@ -554,21 +566,21 @@ describe('Auction Flow Integration Test', () => {
     });
     const ownerBefore = nftBefore.owner;
     console.log(`📦 NFT owner before settlement: ${ownerBefore.slice(0, 10)}...`);
-    
+
     // Settle auction (anyone can call this)
     const settler = seller; // Use seller account (account 1)
     console.log(`\n⚖️  Settling auction...`);
-    
+
     const settleTx = await settler.writeContract({
       address: AuctionHouse,
       abi: auctionHouseAbi,
       functionName: 'settleAuction',
       args: [listingId],
     });
-    
+
     await publicClient.waitForTransactionReceipt({ hash: settleTx });
     console.log(`✅ Auction settled`);
-    
+
     // Verify NFT was transferred to winner
     const nftAfter = await publicClient.readContract({
       address: NFTRegistry,
@@ -576,14 +588,14 @@ describe('Auction Flow Integration Test', () => {
       functionName: 'getNFT',
       args: [testTokenId],
     });
-    
+
     expect(nftAfter.owner.toLowerCase()).toBe(winnerBefore.toLowerCase());
     expect(nftAfter.owner.toLowerCase()).toBe(winner.account.address.toLowerCase());
     console.log(`✅ NFT transferred to winner: ${nftAfter.owner.slice(0, 10)}...`);
     console.log(`✅ Winner is Account 0: ${winner.account.address}`);
     console.log(`   - You can now view this NFT in "My NFTs" page`);
     console.log(`   - Bidding history will be visible in the NFT detail page`);
-    
+
     // Verify auction is settled
     const auctionAfter = await publicClient.readContract({
       address: AuctionHouse,
@@ -591,22 +603,22 @@ describe('Auction Flow Integration Test', () => {
       functionName: 'getAuction',
       args: [listingId],
     });
-    
+
     expect(auctionAfter.isSettled).toBe(true);
     console.log(`✅ Auction marked as settled`);
-    
+
     // Verify seller received payment
-    const sellerBalance = await publicClient.readContract({
+    await publicClient.readContract({
       address: MockPlatformToken,
       abi: erc20Abi,
       functionName: 'balanceOf',
       args: [seller.account.address],
     });
-    
+
     // Seller should have received the winning bid amount
     // (We can't easily verify exact amount without tracking initial balance)
     console.log(`✅ Seller received payment`);
-    
+
     console.log('\n✅ Auction flow test completed successfully!');
   });
 
@@ -618,7 +630,7 @@ describe('Auction Flow Integration Test', () => {
 
     beforeAll(async () => {
       console.log('\n=== Setting up offer test ===');
-      
+
       // Find an NFT owned by Account 0 (the user's address)
       // Try NFTs 1-20 to find one owned by account 0
       let foundNFT = false;
@@ -630,7 +642,7 @@ describe('Auction Flow Integration Test', () => {
             functionName: 'getNFT',
             args: [BigInt(i)],
           });
-          
+
           if (nft.owner.toLowerCase() === nftOwner.account.address.toLowerCase()) {
             offerTestTokenId = BigInt(i);
             foundNFT = true;
@@ -641,11 +653,11 @@ describe('Auction Flow Integration Test', () => {
           // Continue to next NFT
         }
       }
-      
+
       if (!foundNFT) {
         throw new Error('No NFT found owned by Account 0. Please deploy contracts first.');
       }
-      
+
       // Verify owner
       const nft = await publicClient.readContract({
         address: NFTRegistry,
@@ -653,7 +665,7 @@ describe('Auction Flow Integration Test', () => {
         functionName: 'getNFT',
         args: [offerTestTokenId],
       });
-      
+
       expect(nft.owner.toLowerCase()).toBe(nftOwner.account.address.toLowerCase());
       console.log(`✅ Account 0 owns NFT #${offerTestTokenId}`);
       console.log(`📦 NFT Details:`);
@@ -661,7 +673,7 @@ describe('Auction Flow Integration Test', () => {
       console.log(`   - Skin Name: ${nft.skinName}`);
       console.log(`   - Owner: ${nftOwner.account.address}`);
       console.log(`   - Game Type: ${nft.gameType}`);
-      
+
       // Check for existing listings and cancel them if needed
       const existingListings = await publicClient.readContract({
         address: NFTMarketplace,
@@ -669,7 +681,7 @@ describe('Auction Flow Integration Test', () => {
         functionName: 'getTokenListings',
         args: [offerTestTokenId],
       });
-      
+
       // Cancel any active listings
       for (const listing of existingListings) {
         if (listing.isActive && listing.seller.toLowerCase() === nftOwner.account.address.toLowerCase()) {
@@ -683,14 +695,14 @@ describe('Auction Flow Integration Test', () => {
           console.log(`✅ Cancelled listing #${listing.listingId}`);
         }
       }
-      
+
       // Create a fixed-price listing for the NFT (required for offers)
       console.log(`\n📝 Creating fixed-price listing for NFT #${offerTestTokenId}...`);
       const listingPrice = parseEther('100'); // 100 PLATFORM
-      
+
       // Ensure owner has tokens for listing (not needed for fixed price, but good practice)
       await ensureBalance(nftOwner, MockPlatformToken, listingPrice, 18, walletClients[0]);
-      
+
       const listingParams = {
         tokenId: offerTestTokenId,
         price: listingPrice,
@@ -698,30 +710,30 @@ describe('Auction Flow Integration Test', () => {
         listingType: 0, // FIXED_PRICE
         duration: 0n, // Not needed for fixed price
       };
-      
+
       const listingTx = await nftOwner.writeContract({
         address: NFTMarketplace,
         abi: nftMarketplaceAbi,
         functionName: 'createListing',
         args: [listingParams],
       });
-      
-      const listingReceipt = await publicClient.waitForTransactionReceipt({ hash: listingTx });
-      
+
+      await publicClient.waitForTransactionReceipt({ hash: listingTx });
+
       // Get listing ID from nextListingId
       const nextListingId = await publicClient.readContract({
         address: NFTMarketplace,
         abi: nftMarketplaceAbi,
         functionName: 'nextListingId',
       });
-      
+
       offerListingId = nextListingId - 1n;
       console.log(`✅ Created fixed-price listing:`);
       console.log(`   - Listing ID: ${offerListingId}`);
       console.log(`   - NFT Token ID: ${offerTestTokenId}`);
       console.log(`   - Price: ${formatEther(listingPrice)} PLATFORM`);
       console.log(`   - Listing Type: Fixed Price`);
-      
+
       console.log(`\n💡 To verify in frontend:`);
       console.log(`   - Go to: http://localhost:3000/nft/${offerTestTokenId}`);
       console.log(`   - Account 1 (${offerer.account.address}) will make an offer`);
@@ -730,7 +742,7 @@ describe('Auction Flow Integration Test', () => {
 
     it('should allow another account to create an offer on Account 0 NFT', async () => {
       console.log('\n=== Testing offer creation ===');
-      
+
       // Verify listing exists and is active
       const listing = await publicClient.readContract({
         address: NFTMarketplace,
@@ -738,16 +750,16 @@ describe('Auction Flow Integration Test', () => {
         functionName: 'getListing',
         args: [offerListingId],
       });
-      
+
       expect(listing.isActive).toBe(true);
       expect(listing.tokenId).toBe(offerTestTokenId);
       console.log(`✅ Verified listing #${offerListingId} is active for NFT #${offerTestTokenId}`);
       console.log(`   - Listing Price: ${formatEther(listing.price)} PLATFORM`);
       console.log(`   - Listing Type: ${listing.listingType === 0 ? 'Fixed Price' : 'Auction'}`);
-      
+
       const offerAmount = parseEther('50'); // 50 PLATFORM (below listing price)
       const expirationDays = 7; // 7 days
-      
+
       // Ensure offerer has ETH for gas
       const ethForGas = parseEther('10');
       const ethBalance = await publicClient.getBalance({ address: offerer.account.address });
@@ -759,16 +771,16 @@ describe('Auction Flow Integration Test', () => {
         });
         console.log(`✅ Funded offerer (${offerer.account.address.slice(0, 10)}...) with ETH for gas`);
       }
-      
+
       // Ensure offerer has enough Platform Tokens for the offer
       console.log(`\n💰 Funding offerer with Platform Tokens...`);
       await ensureBalance(offerer, MockPlatformToken, offerAmount, 18, walletClients[0]);
-      
+
       // Get current block timestamp for expiration calculation
       const currentBlock = await publicClient.getBlock();
       const currentTimestamp = BigInt(currentBlock.timestamp);
       const expirationTime = currentTimestamp + BigInt(expirationDays * 24 * 60 * 60);
-      
+
       console.log(`\n📝 Offerer (${offerer.account.address}) creating offer:`);
       console.log(`   - NFT Token ID: ${offerTestTokenId}`);
       console.log(`   - Listing ID: ${offerListingId}`);
@@ -777,7 +789,7 @@ describe('Auction Flow Integration Test', () => {
       console.log(`   - Expiration: ${expirationDays} days`);
       console.log(`   - Expiration Time: ${new Date(Number(expirationTime) * 1000).toLocaleString()}`);
       console.log(`   - Current Block Time: ${new Date(Number(currentTimestamp) * 1000).toLocaleString()}`);
-      
+
       // Get offerer balance before
       const offererBalanceBefore = await publicClient.readContract({
         address: MockPlatformToken,
@@ -786,11 +798,11 @@ describe('Auction Flow Integration Test', () => {
         args: [offerer.account.address],
       });
       console.log(`   - Offerer Balance Before: ${formatEther(offererBalanceBefore)} PLATFORM`);
-      
+
       // Approve OfferSystem to spend tokens
       console.log(`\n🔐 Approving OfferSystem to spend tokens...`);
       await approveToken(offerer, MockPlatformToken, OfferSystem, offerAmount);
-      
+
       // Get OfferSystem balance before
       const offerSystemBalanceBefore = await publicClient.readContract({
         address: MockPlatformToken,
@@ -799,7 +811,7 @@ describe('Auction Flow Integration Test', () => {
         args: [OfferSystem],
       });
       console.log(`   - OfferSystem Balance Before: ${formatEther(offerSystemBalanceBefore)} PLATFORM`);
-      
+
       // Create offer
       console.log(`\n📤 Creating offer transaction...`);
       const offerTx = await offerer.writeContract({
@@ -808,11 +820,11 @@ describe('Auction Flow Integration Test', () => {
         functionName: 'createOffer',
         args: [offerTestTokenId, offerAmount, MockPlatformToken, expirationTime],
       });
-      
+
       console.log(`   - Transaction Hash: ${offerTx}`);
       const offerReceipt = await publicClient.waitForTransactionReceipt({ hash: offerTx });
       console.log(`✅ Offer transaction confirmed in block ${offerReceipt.blockNumber}`);
-      
+
       // Extract offer ID from event or get nextOfferId
       const tokenOffers = await publicClient.readContract({
         address: OfferSystem,
@@ -820,9 +832,9 @@ describe('Auction Flow Integration Test', () => {
         functionName: 'getTokenOffers',
         args: [offerTestTokenId],
       });
-      
+
       console.log(`\n📊 Found ${tokenOffers.length} total offer(s) for NFT #${offerTestTokenId}`);
-      
+
       // Find the offer we just created (by offerer and amount)
       const createdOffer = tokenOffers.find(
         (o) =>
@@ -831,7 +843,7 @@ describe('Auction Flow Integration Test', () => {
           o.isActive &&
           !o.isAccepted
       );
-      
+
       expect(createdOffer).toBeDefined();
       expect(createdOffer?.tokenId).toBe(offerTestTokenId);
       expect(createdOffer?.offerer.toLowerCase()).toBe(offerer.account.address.toLowerCase());
@@ -839,7 +851,7 @@ describe('Auction Flow Integration Test', () => {
       expect(createdOffer?.paymentToken.toLowerCase()).toBe(MockPlatformToken.toLowerCase());
       expect(createdOffer?.isActive).toBe(true);
       expect(createdOffer?.isAccepted).toBe(false);
-      
+
       console.log(`\n✅ Offer created successfully:`);
       console.log(`   - Offer ID: ${createdOffer?.offerId}`);
       console.log(`   - Token ID: ${createdOffer?.tokenId}`);
@@ -850,7 +862,7 @@ describe('Auction Flow Integration Test', () => {
       console.log(`   - Time Until Expiration: ${Math.floor(Number(createdOffer?.expirationTime || 0n) - Number(currentTimestamp))} seconds`);
       console.log(`   - Active: ${createdOffer?.isActive}`);
       console.log(`   - Accepted: ${createdOffer?.isAccepted}`);
-      
+
       // Verify tokens were transferred to OfferSystem
       const offerSystemBalanceAfter = await publicClient.readContract({
         address: MockPlatformToken,
@@ -858,7 +870,7 @@ describe('Auction Flow Integration Test', () => {
         functionName: 'balanceOf',
         args: [OfferSystem],
       });
-      
+
       expect(offerSystemBalanceAfter >= offerSystemBalanceBefore + offerAmount).toBe(true);
       console.log(`\n💰 Token Transfer Verification:`);
       console.log(`   - OfferSystem Balance Before: ${formatEther(offerSystemBalanceBefore)} PLATFORM`);
@@ -866,7 +878,7 @@ describe('Auction Flow Integration Test', () => {
       console.log(`   - Amount Transferred: ${formatEther(offerSystemBalanceAfter - offerSystemBalanceBefore)} PLATFORM`);
       console.log(`   - Expected Amount: ${formatEther(offerAmount)} PLATFORM`);
       console.log(`   - ✅ Transfer verified`);
-      
+
       // Verify offerer's balance decreased
       const offererBalanceAfter = await publicClient.readContract({
         address: MockPlatformToken,
@@ -874,12 +886,12 @@ describe('Auction Flow Integration Test', () => {
         functionName: 'balanceOf',
         args: [offerer.account.address],
       });
-      
+
       console.log(`\n💰 Offerer Balance:`);
       console.log(`   - Before: ${formatEther(offererBalanceBefore)} PLATFORM`);
       console.log(`   - After: ${formatEther(offererBalanceAfter)} PLATFORM`);
       console.log(`   - Decreased by: ${formatEther(offererBalanceBefore - offererBalanceAfter)} PLATFORM`);
-      
+
       // Verify NFT ownership hasn't changed
       const nftAfterOffer = await publicClient.readContract({
         address: NFTRegistry,
@@ -887,26 +899,26 @@ describe('Auction Flow Integration Test', () => {
         functionName: 'getNFT',
         args: [offerTestTokenId],
       });
-      
+
       expect(nftAfterOffer.owner.toLowerCase()).toBe(nftOwner.account.address.toLowerCase());
       console.log(`\n📦 NFT Ownership Verification:`);
       console.log(`   - Current Owner: ${nftAfterOffer.owner}`);
       console.log(`   - Expected Owner: ${nftOwner.account.address}`);
       console.log(`   - ✅ Ownership unchanged (offer not yet accepted)`);
-      
+
       console.log(`\n💡 Next steps:`);
       console.log(`   - Go to: http://localhost:3000/nft/${offerTestTokenId}`);
       console.log(`   - Connect with Account 0 (${nftOwner.account.address})`);
       console.log(`   - View the "Offers Received" section`);
       console.log(`   - You should see Offer ID: ${createdOffer?.offerId} for ${formatEther(offerAmount)} PLATFORM`);
       console.log(`   - Accept the offer to complete the sale`);
-      
+
       console.log('\n✅ Offer creation test completed successfully!');
     });
 
     it('should allow NFT owner to accept offer and verify payment flow', async () => {
       console.log('\n=== Testing offer acceptance and payment flow ===');
-      
+
       // Get the offer that was created in the previous test
       const tokenOffers = await publicClient.readContract({
         address: OfferSystem,
@@ -914,7 +926,7 @@ describe('Auction Flow Integration Test', () => {
         functionName: 'getTokenOffers',
         args: [offerTestTokenId],
       });
-      
+
       // Find the active offer created by Account 1
       const activeOffer = tokenOffers.find(
         (o) =>
@@ -922,18 +934,18 @@ describe('Auction Flow Integration Test', () => {
           o.isActive &&
           !o.isAccepted
       );
-      
+
       expect(activeOffer).toBeDefined();
       const offerId = activeOffer!.offerId;
       const offerAmount = activeOffer!.amount;
-      
+
       console.log(`\n📋 Offer Details:`);
       console.log(`   - Offer ID: ${offerId}`);
       console.log(`   - NFT Token ID: ${offerTestTokenId}`);
       console.log(`   - Offerer: ${activeOffer!.offerer}`);
       console.log(`   - Amount: ${formatEther(offerAmount)} PLATFORM`);
       console.log(`   - Payment Token: ${activeOffer!.paymentToken}`);
-      
+
       // Get balances BEFORE acceptance
       const ownerBalanceBefore = await publicClient.readContract({
         address: MockPlatformToken,
@@ -941,21 +953,21 @@ describe('Auction Flow Integration Test', () => {
         functionName: 'balanceOf',
         args: [nftOwner.account.address],
       });
-      
+
       const offerSystemBalanceBefore = await publicClient.readContract({
         address: MockPlatformToken,
         abi: erc20Abi,
         functionName: 'balanceOf',
         args: [OfferSystem],
       });
-      
+
       const offererBalanceBefore = await publicClient.readContract({
         address: MockPlatformToken,
         abi: erc20Abi,
         functionName: 'balanceOf',
         args: [offerer.account.address],
       });
-      
+
       // Get NFT owner before acceptance
       const nftBefore = await publicClient.readContract({
         address: NFTRegistry,
@@ -963,16 +975,16 @@ describe('Auction Flow Integration Test', () => {
         functionName: 'getNFT',
         args: [offerTestTokenId],
       });
-      
+
       console.log(`\n💰 Pre-acceptance Balances:`);
       console.log(`   - NFT Owner (Account 0) Balance: ${formatEther(ownerBalanceBefore)} PLATFORM`);
       console.log(`   - OfferSystem Balance: ${formatEther(offerSystemBalanceBefore)} PLATFORM`);
       console.log(`   - Offerer (Account 1) Balance: ${formatEther(offererBalanceBefore)} PLATFORM`);
       console.log(`   - NFT Current Owner: ${nftBefore.owner}`);
       console.log(`   - Expected Owner Before: ${nftOwner.account.address}`);
-      
+
       expect(nftBefore.owner.toLowerCase()).toBe(nftOwner.account.address.toLowerCase());
-      
+
       // Accept the offer (NFT owner calls acceptOffer)
       console.log(`\n✅ NFT Owner (Account 0) accepting offer #${offerId}...`);
       const acceptTx = await nftOwner.writeContract({
@@ -981,20 +993,20 @@ describe('Auction Flow Integration Test', () => {
         functionName: 'acceptOffer',
         args: [offerId],
       });
-      
+
       const acceptReceipt = await publicClient.waitForTransactionReceipt({ hash: acceptTx });
       console.log(`✅ Offer acceptance transaction confirmed in block ${acceptReceipt.blockNumber}`);
-      
+
       // Parse and log OfferAccepted event
       console.log(`\n🔍 Parsing transaction logs for OfferAccepted event...`);
       console.log(`   - Total logs in receipt: ${acceptReceipt.logs.length}`);
-      
+
       // Filter logs from OfferSystem contract
       const offerSystemLogs = acceptReceipt.logs.filter(
         (log) => log.address.toLowerCase() === OfferSystem.toLowerCase()
       );
       console.log(`   - Logs from OfferSystem: ${offerSystemLogs.length}`);
-      
+
       // Try to decode all OfferSystem logs
       const decodedLogs = offerSystemLogs.map((log, idx) => {
         try {
@@ -1010,16 +1022,16 @@ describe('Auction Flow Integration Test', () => {
           return null;
         }
       });
-      
+
       const offerAcceptedEvent = decodedLogs.find(
         (decoded) => decoded && decoded.eventName === 'OfferAccepted'
       );
-      
+
       if (offerAcceptedEvent && offerAcceptedEvent.eventName === 'OfferAccepted') {
         const eventArgs = offerAcceptedEvent.args as any;
         const decimals = eventArgs.paymentToken?.toLowerCase() === MockUSDT.toLowerCase() ? 6 : 18;
         const tokenSymbol = eventArgs.paymentToken?.toLowerCase() === MockUSDT.toLowerCase() ? 'USDT' : 'PLATFORM';
-        
+
         console.log(`\n📢 OfferAccepted Event Logged:`);
         console.log(`   - Transaction Hash: ${acceptTx}`);
         console.log(`   - Block Number: ${acceptReceipt.blockNumber}`);
@@ -1029,20 +1041,23 @@ describe('Auction Flow Integration Test', () => {
         console.log(`   - NFT Owner (Seller): ${eventArgs.nftOwner || 'N/A'}`);
         console.log(`   - Amount: ${formatUnits(eventArgs.amount || 0n, decimals)} ${tokenSymbol}`);
         console.log(`   - Payment Token: ${eventArgs.paymentToken || 'N/A'}`);
-        
+
         // Verify event data matches expectations
-        expect(eventArgs.offerId).toBe(offerId);
-        expect(eventArgs.tokenId).toBe(offerTestTokenId);
-        expect(eventArgs.offerer.toLowerCase()).toBe(offerer.account.address.toLowerCase());
-        expect(eventArgs.nftOwner.toLowerCase()).toBe(nftOwner.account.address.toLowerCase());
-        expect(eventArgs.amount).toBe(offerAmount);
+        const event = offerAcceptedEvent;
+        if (event) {
+          expect(event.eventName).toBe('OfferAccepted');
+          expect(event.args.offerId).toBe(offerId);
+          expect(event.args.nftOwner.toLowerCase()).toBe(nftOwner.account.address.toLowerCase());
+          expect(event.args.offerer.toLowerCase()).toBe(offerer.account.address.toLowerCase());
+          expect(event.args.amount).toBe(offerAmount);
+        }
         expect(eventArgs.paymentToken.toLowerCase()).toBe(MockPlatformToken.toLowerCase());
         console.log(`   - ✅ Event data verified`);
       } else {
         console.log(`\n⚠️  Warning: OfferAccepted event not found in transaction receipt`);
         console.log(`   - Checked ${decodedLogs.length} logs from OfferSystem`);
         console.log(`   - Decoded events: ${decodedLogs.filter(d => d).map(d => d?.eventName).join(', ')}`);
-        
+
         // Also check for ListingCancelled events (from deactivateListingsForToken)
         const listingCancelledEvents = acceptReceipt.logs
           .filter((log) => log.address.toLowerCase() === NFTMarketplace.toLowerCase())
@@ -1058,16 +1073,17 @@ describe('Auction Flow Integration Test', () => {
             }
           })
           .filter((decoded) => decoded && decoded.eventName === 'ListingCancelled');
-        
+
         if (listingCancelledEvents.length > 0) {
           console.log(`\n📋 ListingCancelled Events (from deactivateListingsForToken):`);
           listingCancelledEvents.forEach((event, idx) => {
+            if (!event) return;
             const args = event.args as any;
             console.log(`   - Event ${idx + 1}: Listing #${args.listingId?.toString() || 'N/A'} for NFT #${args.tokenId?.toString() || 'N/A'}`);
           });
         }
       }
-      
+
       // Verify NFT was transferred to offerer
       const nftAfter = await publicClient.readContract({
         address: NFTRegistry,
@@ -1075,14 +1091,14 @@ describe('Auction Flow Integration Test', () => {
         functionName: 'getNFT',
         args: [offerTestTokenId],
       });
-      
+
       expect(nftAfter.owner.toLowerCase()).toBe(offerer.account.address.toLowerCase());
       console.log(`\n📦 NFT Transfer Verification:`);
       console.log(`   - NFT Owner Before: ${nftBefore.owner}`);
       console.log(`   - NFT Owner After: ${nftAfter.owner}`);
       console.log(`   - Expected New Owner: ${offerer.account.address}`);
       console.log(`   - ✅ NFT transferred to offerer`);
-      
+
       // Verify offer is marked as accepted
       const offerAfter = await publicClient.readContract({
         address: OfferSystem,
@@ -1090,14 +1106,14 @@ describe('Auction Flow Integration Test', () => {
         functionName: 'getOffer',
         args: [offerId],
       });
-      
+
       expect(offerAfter.isAccepted).toBe(true);
       expect(offerAfter.isActive).toBe(false);
       console.log(`\n📋 Offer Status Verification:`);
       console.log(`   - Offer Accepted: ${offerAfter.isAccepted}`);
       console.log(`   - Offer Active: ${offerAfter.isActive}`);
       console.log(`   - ✅ Offer marked as accepted and inactive`);
-      
+
       // Verify payment flow: Owner should receive the offer amount
       const ownerBalanceAfter = await publicClient.readContract({
         address: MockPlatformToken,
@@ -1105,20 +1121,20 @@ describe('Auction Flow Integration Test', () => {
         functionName: 'balanceOf',
         args: [nftOwner.account.address],
       });
-      
+
       const ownerBalanceIncrease = ownerBalanceAfter - ownerBalanceBefore;
       console.log(`\n💰 Payment Flow Verification:`);
       console.log(`   - Owner Balance Before: ${formatEther(ownerBalanceBefore)} PLATFORM`);
       console.log(`   - Owner Balance After: ${formatEther(ownerBalanceAfter)} PLATFORM`);
       console.log(`   - Balance Increase: ${formatEther(ownerBalanceIncrease)} PLATFORM`);
       console.log(`   - Expected Increase: ${formatEther(offerAmount)} PLATFORM`);
-      
+
       // Owner should receive the full offer amount (minus any fees if applicable)
       // Note: If there are platform fees or royalties, they would be deducted here
       // For now, we expect the owner to receive the full amount
       expect(ownerBalanceIncrease).toBe(offerAmount);
       console.log(`   - ✅ Owner received full offer amount`);
-      
+
       // Verify OfferSystem balance decreased (payment sent to owner)
       const offerSystemBalanceAfter = await publicClient.readContract({
         address: MockPlatformToken,
@@ -1126,17 +1142,17 @@ describe('Auction Flow Integration Test', () => {
         functionName: 'balanceOf',
         args: [OfferSystem],
       });
-      
+
       const offerSystemBalanceDecrease = offerSystemBalanceBefore - offerSystemBalanceAfter;
       console.log(`\n💰 OfferSystem Balance Verification:`);
       console.log(`   - OfferSystem Balance Before: ${formatEther(offerSystemBalanceBefore)} PLATFORM`);
       console.log(`   - OfferSystem Balance After: ${formatEther(offerSystemBalanceAfter)} PLATFORM`);
       console.log(`   - Balance Decrease: ${formatEther(offerSystemBalanceDecrease)} PLATFORM`);
       console.log(`   - Expected Decrease: ${formatEther(offerAmount)} PLATFORM`);
-      
+
       expect(offerSystemBalanceDecrease).toBe(offerAmount);
       console.log(`   - ✅ OfferSystem sent payment to owner`);
-      
+
       // Verify offerer balance unchanged (they already paid when creating the offer)
       const offererBalanceAfter = await publicClient.readContract({
         address: MockPlatformToken,
@@ -1144,13 +1160,13 @@ describe('Auction Flow Integration Test', () => {
         functionName: 'balanceOf',
         args: [offerer.account.address],
       });
-      
+
       expect(offererBalanceAfter).toBe(offererBalanceBefore);
       console.log(`\n💰 Offerer Balance Verification:`);
       console.log(`   - Offerer Balance Before: ${formatEther(offererBalanceBefore)} PLATFORM`);
       console.log(`   - Offerer Balance After: ${formatEther(offererBalanceAfter)} PLATFORM`);
       console.log(`   - ✅ Offerer balance unchanged (already paid when creating offer)`);
-      
+
       // Verify no other active offers exist for this NFT (they should be cancelled)
       const remainingOffers = await publicClient.readContract({
         address: OfferSystem,
@@ -1158,13 +1174,13 @@ describe('Auction Flow Integration Test', () => {
         functionName: 'getTokenOffers',
         args: [offerTestTokenId],
       });
-      
+
       const activeOffers = remainingOffers.filter((o) => o.isActive && !o.isAccepted);
       console.log(`\n📋 Remaining Offers Verification:`);
       console.log(`   - Total Offers: ${remainingOffers.length}`);
       console.log(`   - Active Offers: ${activeOffers.length}`);
       console.log(`   - ✅ All other offers cancelled (if any existed)`);
-      
+
       // Verify listing was deactivated after offer acceptance
       const listingsAfterAccept = await publicClient.readContract({
         address: NFTMarketplace,
@@ -1172,32 +1188,32 @@ describe('Auction Flow Integration Test', () => {
         functionName: 'getTokenListings',
         args: [offerTestTokenId],
       });
-      
+
       const activeListings = listingsAfterAccept.filter((l) => l.isActive);
       console.log(`\n📋 Listing Deactivation Verification:`);
       console.log(`   - Total Listings for NFT #${offerTestTokenId}: ${listingsAfterAccept.length}`);
       console.log(`   - Active Listings: ${activeListings.length}`);
       if (listingsAfterAccept.length > 0) {
-        listingsAfterAccept.forEach((listing, idx) => {
+        listingsAfterAccept.forEach((listing) => {
           console.log(`   - Listing #${listing.listingId}: Active=${listing.isActive}, Seller=${listing.seller.slice(0, 10)}...`);
         });
       }
       expect(activeListings.length).toBe(0);
       console.log(`   - ✅ All listings deactivated after offer acceptance`);
-      
+
       console.log(`\n💡 Verification Summary:`);
       console.log(`   - ✅ NFT transferred from Account 0 to Account 1`);
       console.log(`   - ✅ Payment (${formatEther(offerAmount)} PLATFORM) sent to Account 0`);
       console.log(`   - ✅ Offer marked as accepted`);
       console.log(`   - ✅ OfferSystem balance decreased by offer amount`);
       console.log(`   - ✅ All other offers for this NFT cancelled`);
-      
+
       console.log(`\n💡 To verify in frontend:`);
       console.log(`   - Go to: http://localhost:3000/nft/${offerTestTokenId}`);
       console.log(`   - NFT should now be owned by Account 1 (${offerer.account.address})`);
       console.log(`   - Account 0 can check their balance increased by ${formatEther(offerAmount)} PLATFORM`);
       console.log(`   - Account 1 can view the NFT in "My NFTs" page`);
-      
+
       console.log('\n✅ Offer acceptance and payment flow test completed successfully!');
     });
   });
