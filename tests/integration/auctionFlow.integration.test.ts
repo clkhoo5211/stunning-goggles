@@ -3,7 +3,6 @@ import {
   createPublicClient,
   createWalletClient,
   http,
-  parseUnits,
   parseEther,
   formatUnits,
   formatEther,
@@ -74,6 +73,10 @@ async function ensureBalance(
   decimals: number = 18,
   ownerWalletClient?: ReturnType<typeof createWalletClient>
 ) {
+  if (!walletClient.account) {
+    throw new Error('Wallet client account is not defined');
+  }
+  
   const balance = await publicClient.readContract({
     address: tokenAddress,
     abi: erc20Abi,
@@ -86,7 +89,6 @@ async function ensureBalance(
     // Use owner account (account 0) to mint, as mint function is onlyOwner
     const minter = ownerWalletClient || walletClients[0];
     await minter.writeContract({
-      address: tokenAddress,
       abi: mockTokenAbi,
       functionName: 'mint',
       args: [walletClient.account.address, mintAmount],
@@ -101,6 +103,10 @@ async function approveToken(
   spender: `0x${string}`,
   amount: bigint
 ) {
+  if (!walletClient.account) {
+    throw new Error('Wallet client account is not defined');
+  }
+  
   const allowance = await publicClient.readContract({
     address: tokenAddress,
     abi: erc20Abi,
@@ -141,7 +147,7 @@ describe('Auction Flow Integration Test', () => {
           args: [BigInt(i)],
         });
         
-        if (nft.owner.toLowerCase() === seller.account.address.toLowerCase()) {
+        if (seller.account && nft.owner.toLowerCase() === seller.account.address.toLowerCase()) {
           testTokenId = BigInt(i);
           foundNFT = true;
           console.log(`✅ Found NFT #${testTokenId} owned by seller (account 1)`);
@@ -164,7 +170,7 @@ describe('Auction Flow Integration Test', () => {
       args: [testTokenId],
     });
     
-    expect(nft.owner.toLowerCase()).toBe(seller.account.address.toLowerCase());
+    expect(nft.owner.toLowerCase()).toBe(seller.account!.address.toLowerCase());
     console.log(`✅ Seller owns NFT #${testTokenId}`);
     console.log(`📦 NFT Details:`);
     console.log(`   - Token ID: ${testTokenId}`);
@@ -182,7 +188,7 @@ describe('Auction Flow Integration Test', () => {
     
     // Cancel any active listings
     for (const listing of existingListings) {
-      if (listing.isActive && listing.seller.toLowerCase() === seller.account.address.toLowerCase()) {
+      if (listing.isActive && seller.account && listing.seller.toLowerCase() === seller.account.address.toLowerCase()) {
         console.log(`⚠️  Cancelling existing listing #${listing.listingId} for NFT #${testTokenId}`);
         await seller.writeContract({
           address: NFTMarketplace,
@@ -221,9 +227,9 @@ describe('Auction Flow Integration Test', () => {
     const receipt = await publicClient.waitForTransactionReceipt({ hash: listingTx });
     
     // Extract listing ID from event
-    const listingCreatedEvent = receipt.logs.find((log) => {
+    receipt.logs.find((log) => {
       try {
-        const parsed = publicClient.getAbiItem({
+        publicClient.getAbiItem({
           abi: nftMarketplaceAbi,
           name: 'ListingCreated',
         });
@@ -266,6 +272,8 @@ describe('Auction Flow Integration Test', () => {
     const ethForGas = parseEther('10'); // 10 ETH for gas fees
     
     for (const bidder of bidders) {
+      if (!bidder.account) continue;
+      
       // Fund with ETH for gas
       const ethBalance = await publicClient.getBalance({ address: bidder.account.address });
       if (ethBalance < ethForGas) {
