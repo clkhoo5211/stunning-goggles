@@ -50,22 +50,8 @@ const mockUsdtAbi = [
 ] as const;
 
 async function getPlayerState() {
-  // Try GameController first (old architecture) if available
-  if (OldGameController && OldGameController !== '0x0000000000000000000000000000000000000000') {
-    try {
-      return await publicClient.readContract({
-        address: OldGameController,
-        abi: gameControllerAbi,
-        functionName: 'getPlayerState',
-        args: [account.address],
-      });
-    } catch (error) {
-      // Continue to try new architecture
-    }
-  }
-  
   // Try DiceGame (new architecture)
-  if (GameController && GameController !== '0x0000000000000000000000000000000000000000' && GameController !== OldGameController) {
+  if (GameController && GameController !== '0x0000000000000000000000000000000000000000') {
     try {
       // DiceGame doesn't have getPlayerState, try PlayerStorage
       if (PlayerStorageAddress && PlayerStorageAddress !== '0x0000000000000000000000000000000000000000') {
@@ -83,7 +69,7 @@ async function getPlayerState() {
       return null;
     }
   }
-  
+
   return null;
 }
 
@@ -212,7 +198,7 @@ describe('LuckChain frontend contract flow (integration)', () => {
         address: GameController,
         abi: diceGameAbi,
         functionName: 'buyRounds',
-        args: [10n, 0],
+        args: [10n],
       });
 
       // Play up to 10 rounds, forfeiting first rewards and claiming near the end.
