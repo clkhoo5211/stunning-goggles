@@ -9,3 +9,9 @@ dist
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Exclude markdown files
+*.md
+
+# Exclude docs directory
+docs/

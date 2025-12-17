@@ -10,6 +10,7 @@ import {
   base,
   optimism,
   bsc,
+  bscTestnet,
   avalanche,
 } from '@reown/appkit/networks';
 import { getTargetChainId } from './contracts/getNetworkConfig';
@@ -53,6 +54,7 @@ export const networks: [AppKitNetwork, ...AppKitNetwork[]] = [
   base,
   optimism,
   bsc,
+  bscTestnet,
   avalanche,
 ];
 

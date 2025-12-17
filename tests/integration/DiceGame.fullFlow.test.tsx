@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import DiceGame from './DiceGame';
+import DiceGame from '../../src/pages/DiceGame';
 
 // --- Mocks for wagmi + appKit so the component thinks wallet is connected ---
 vi.mock('wagmi', () => ({

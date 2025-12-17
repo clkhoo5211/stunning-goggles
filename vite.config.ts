@@ -149,6 +149,14 @@ export default defineConfig(({ mode }) => {
     optimizeDeps: {
       include: ['react', 'react-dom', 'wagmi', 'viem'],
     },
+    
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: './tests/helpers/setup.ts',
+      include: ['tests/**/*.test.{ts,tsx}'],
+      exclude: ['node_modules', 'dist'],
+    },
   };
 });
 

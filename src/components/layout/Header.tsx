@@ -5,6 +5,13 @@ import { formatEther } from 'viem';
 import { appKit } from '@lib/reown';
 import { getTargetChainId, getNetworkName } from '@lib/contracts/getNetworkConfig';
 import { Wallet, Home, Gamepad2, History, Trophy, Shield, User, Droplet, Store, Image, Banknote } from 'lucide-react';
+import {
+  isMarketplaceEnabled,
+  isMyNftsEnabled,
+  isLendingEnabled,
+  isGovernanceEnabled,
+  isFaucetEnabled,
+} from '../../config/features';
 
 export function Header() {
   const { address, isConnected } = useAccount();
@@ -81,18 +88,23 @@ export function Header() {
   const navContainerRef = useRef<HTMLDivElement>(null);
   const navItemRefs = useRef<{ [key: string]: HTMLAnchorElement | null }>({});
 
-  const navigation = [
+  const baseNavigation = [
     { name: 'Home', path: '/', icon: Home },
     { name: 'Play Game', path: '/game', icon: Gamepad2 },
-    { name: 'Marketplace', path: '/marketplace', icon: Store },
-    { name: 'My NFTs', path: '/my-nfts', icon: Image },
-    { name: 'Lending', path: '/lending', icon: Banknote },
     { name: 'History', path: '/history', icon: History },
     { name: 'Leaderboard', path: '/leaderboard', icon: Trophy },
-    { name: 'Governance', path: '/governance', icon: Shield },
     { name: 'Profile', path: '/profile', icon: User },
-    { name: 'Faucet', path: '/faucet', icon: Droplet },
   ];
+
+  const optionalNavigation = [
+    ...(isMarketplaceEnabled() ? [{ name: 'Marketplace', path: '/marketplace', icon: Store }] : []),
+    ...(isMyNftsEnabled() ? [{ name: 'My NFTs', path: '/my-nfts', icon: Image }] : []),
+    ...(isLendingEnabled() ? [{ name: 'Lending', path: '/lending', icon: Banknote }] : []),
+    ...(isGovernanceEnabled() ? [{ name: 'Governance', path: '/governance', icon: Shield }] : []),
+    ...(isFaucetEnabled() ? [{ name: 'Faucet', path: '/faucet', icon: Droplet }] : []),
+  ];
+
+  const navigation = [...baseNavigation, ...optionalNavigation];
 
   const isActive = (path: string) => location.pathname === path;
 

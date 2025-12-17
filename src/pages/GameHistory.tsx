@@ -6,6 +6,11 @@ import { useTransactionHistory } from '@hooks/useTransactionHistory';
 import { useNFTHistory } from '@hooks/useNFTHistory';
 import { useLendingHistory } from '@hooks/useLendingHistory';
 import addresses from '@lib/contracts/addresses.json';
+import {
+  isMarketplaceEnabled,
+  isMyNftsEnabled,
+  isLendingEnabled,
+} from '../config/features';
 
 function formatTimestamp(timestamp?: number) {
   if (!timestamp) return 'Pending';
@@ -20,6 +25,12 @@ export default function GameHistory() {
   const { history: transactionHistory, isLoading: isLoadingTransaction, error: transactionError } = useTransactionHistory();
   const { history: nftHistory, isLoading: isLoadingNFT, error: nftError } = useNFTHistory();
   const { history: lendingHistory, isLoading: isLoadingLending, error: lendingError } = useLendingHistory();
+
+  // Only fetch and include histories for enabled features
+  const shouldShowNFTHistory = isMarketplaceEnabled() || isMyNftsEnabled();
+  const shouldShowLendingHistory = isLendingEnabled();
+  const nftHistoryToShow = shouldShowNFTHistory ? nftHistory : [];
+  const lendingHistoryToShow = shouldShowLendingHistory ? lendingHistory : [];
   
   // Get block explorer URL for current chain
   const getExplorerUrl = (txHash: string): string => {
@@ -50,15 +61,27 @@ export default function GameHistory() {
     }
   };
   
-  // Merge and sort all histories by block number
-  const allHistory = [...gameHistory, ...transactionHistory as any[], ...nftHistory as any[], ...lendingHistory as any[]].sort((a, b) => {
+  // Merge and sort all histories by block number, only including enabled features
+  const allHistory = [
+    ...gameHistory, 
+    ...transactionHistory as any[], 
+    ...nftHistoryToShow as any[], 
+    ...lendingHistoryToShow as any[]
+  ].sort((a, b) => {
     const blockA = typeof a.blockNumber === 'bigint' ? Number(a.blockNumber) : 0;
     const blockB = typeof b.blockNumber === 'bigint' ? Number(b.blockNumber) : 0;
     return blockB - blockA; // Most recent first
   });
   
-  const isLoading = isLoadingGame || isLoadingTransaction || isLoadingNFT || isLoadingLending;
-  const error = gameError || transactionError || nftError || lendingError;
+  // Only consider loading states for enabled features
+  const isLoading = isLoadingGame || 
+    isLoadingTransaction || 
+    (shouldShowNFTHistory && isLoadingNFT) || 
+    (shouldShowLendingHistory && isLoadingLending);
+  const error = gameError || 
+    transactionError || 
+    (shouldShowNFTHistory && nftError) || 
+    (shouldShowLendingHistory && lendingError);
   const history = allHistory;
 
   if (!isConnected) {
@@ -148,14 +171,18 @@ export default function GameHistory() {
               <Trophy className="w-4 h-4" />
               {totalWins} Wins
             </div>
-            <div className="flex items-center gap-1">
-              <ImageIcon className="w-4 h-4" />
-              {nftHistory.length} NFT Activities
-            </div>
-            <div className="flex items-center gap-1">
-              <Coins className="w-4 h-4" />
-              {lendingHistory.length} Lending Activities
-            </div>
+            {shouldShowNFTHistory && (
+              <div className="flex items-center gap-1">
+                <ImageIcon className="w-4 h-4" />
+                {nftHistory.length} NFT Activities
+              </div>
+            )}
+            {shouldShowLendingHistory && (
+              <div className="flex items-center gap-1">
+                <Coins className="w-4 h-4" />
+                {lendingHistory.length} Lending Activities
+              </div>
+            )}
           </div>
         </div>
 
@@ -299,7 +326,7 @@ export default function GameHistory() {
                         <TrendingUp className="w-3 h-3" />
                         {POOL_CONTRIBUTION_SOURCES[entry.endPosition] || 'Unknown'} contribution to prize pool
                       </div>
-                    ) : entry.action === 'NFT Listed' ? (
+                    ) : shouldShowNFTHistory && entry.action === 'NFT Listed' ? (
                       <div className="text-xs text-slate-400">
                         NFT #{entry.tokenId?.toString()} • {entry.listingType} • {entry.price} {entry.paymentToken?.toLowerCase() === addresses.contracts.MockUSDT?.toLowerCase() ? 'USDT' : 'PLATFORM'}
                       </div>
@@ -335,15 +362,15 @@ export default function GameHistory() {
                       <div className="text-xs text-slate-400">
                         {entry.action === 'Offer Cancelled' ? 'Cancelled' : 'Expired'} offer on NFT #{entry.tokenId?.toString()} • Refunded {entry.amount} {entry.paymentToken?.toLowerCase() === addresses.contracts.MockUSDT?.toLowerCase() ? 'USDT' : 'PLATFORM'}
                       </div>
-                    ) : entry.action === 'Deposit Collateral' ? (
+                    ) : shouldShowLendingHistory && entry.action === 'Deposit Collateral' ? (
                       <div className="text-xs text-slate-400">
                         Deposited {parseFloat(entry.amount).toLocaleString()} {entry.tokenSymbol}
                       </div>
-                    ) : entry.action === 'Withdraw Collateral' ? (
+                    ) : shouldShowLendingHistory && entry.action === 'Withdraw Collateral' ? (
                       <div className="text-xs text-slate-400">
                         Withdrew {parseFloat(entry.amount).toLocaleString()} {entry.tokenSymbol}
                       </div>
-                    ) : entry.action === 'Borrow' ? (
+                    ) : shouldShowLendingHistory && entry.action === 'Borrow' ? (
                       <>
                         <div className="text-xs text-slate-400">
                           Borrowed {parseFloat(entry.amount).toLocaleString()} {entry.tokenSymbol}
@@ -354,7 +381,7 @@ export default function GameHistory() {
                           </div>
                         )}
                       </>
-                    ) : entry.action === 'Repay' ? (
+                    ) : shouldShowLendingHistory && entry.action === 'Repay' ? (
                       <>
                         <div className="text-xs text-slate-400">
                           Repaid {parseFloat(entry.amount).toLocaleString()} {entry.tokenSymbol}
@@ -368,7 +395,7 @@ export default function GameHistory() {
                           <div className="text-xs text-green-400">✓ Fully Repaid</div>
                         )}
                       </>
-                    ) : entry.action === 'Liquidated' ? (
+                    ) : shouldShowLendingHistory && entry.action === 'Liquidated' ? (
                       <>
                         <div className="text-xs text-red-300">
                           Position liquidated by {entry.liquidator?.slice(0, 6)}...{entry.liquidator?.slice(-4)}
@@ -399,13 +426,13 @@ export default function GameHistory() {
                       entry.action,
                     )
                       ? `${Number(entry.payout || entry.amount || 0).toFixed(2)} USDT`
-                      : ['NFT Listed', 'NFT Purchased', 'Auction Bid', 'Auction Settled', 'Offer Created', 'Offer Accepted', 'Bid Refunded', 'Offer Cancelled', 'Offer Expired'].includes(entry.action)
+                      : shouldShowNFTHistory && ['NFT Listed', 'NFT Purchased', 'Auction Bid', 'Auction Settled', 'Offer Created', 'Offer Accepted', 'Bid Refunded', 'Offer Cancelled', 'Offer Expired'].includes(entry.action)
                       ? entry.amount && entry.paymentToken
                         ? `${Number(entry.amount).toFixed(entry.paymentToken.toLowerCase() === addresses.contracts.MockUSDT?.toLowerCase() ? 2 : 6)} ${entry.paymentToken.toLowerCase() === addresses.contracts.MockUSDT?.toLowerCase() ? 'USDT' : 'PLATFORM'}`
                         : entry.amount
                         ? `${Number(entry.amount).toFixed(2)}`
                         : '—'
-                      : ['Deposit Collateral', 'Withdraw Collateral', 'Borrow', 'Repay', 'Liquidated'].includes(entry.action)
+                      : shouldShowLendingHistory && ['Deposit Collateral', 'Withdraw Collateral', 'Borrow', 'Repay', 'Liquidated'].includes(entry.action)
                       ? entry.amount && entry.tokenSymbol
                         ? `${parseFloat(entry.amount).toLocaleString()} ${entry.tokenSymbol}`
                         : entry.amount
@@ -424,7 +451,7 @@ export default function GameHistory() {
                       ? `${entry.rounds || 10} rounds`
                       : entry.action === 'Pool Contribution'
                       ? POOL_CONTRIBUTION_SOURCES[entry.endPosition] || 'Unknown'
-                      : ['NFT Listed', 'NFT Purchased', 'Listing Cancelled', 'Auction Bid', 'Auction Settled', 'Offer Created', 'Offer Accepted', 'Offer Cancelled', 'Offer Expired', 'Bid Refunded'].includes(entry.action)
+                      : shouldShowNFTHistory && ['NFT Listed', 'NFT Purchased', 'Listing Cancelled', 'Auction Bid', 'Auction Settled', 'Offer Created', 'Offer Accepted', 'Offer Cancelled', 'Offer Expired', 'Bid Refunded'].includes(entry.action)
                       ? entry.tokenId
                         ? `NFT #${entry.tokenId.toString()}`
                         : entry.listingId
@@ -432,7 +459,7 @@ export default function GameHistory() {
                         : entry.offerId
                         ? `Offer #${entry.offerId.toString()}`
                         : '—'
-                      : ['Deposit Collateral', 'Withdraw Collateral', 'Borrow', 'Repay', 'Liquidated'].includes(entry.action)
+                      : shouldShowLendingHistory && ['Deposit Collateral', 'Withdraw Collateral', 'Borrow', 'Repay', 'Liquidated'].includes(entry.action)
                       ? entry.txHash
                         ? (
                             <a
